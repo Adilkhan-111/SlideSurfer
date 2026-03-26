@@ -22,7 +22,7 @@ public class MoveInput : MonoBehaviour
         newPosition.x = Mathf.Clamp(newPosition.x, -3.2f, 3.2f);
         transform.position = newPosition;
         
-        Debug.Log($"OnTry, {ourValue}");
+        //Debug.Log($"OnTry, {ourValue}");
     }
 
     
