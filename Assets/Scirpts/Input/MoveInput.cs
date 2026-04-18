@@ -6,43 +6,45 @@ using Unity.VisualScripting;
 
 public class MoveInput : MonoBehaviour
 {
-    [SerializeField] private bool isGrounded; 
+    [SerializeField] private bool isGrounded;
+    [SerializeField] private Rigidbody PlayerRb;
+    [SerializeField] private float speed = 5f;
+    private const float minX = -3.2f;
+    private const float maxX = 3.2f;
+
     private void OnEnable()
     {
         InputManager.Instance.InputMapActions.Player.Movement.performed += Movement;
         EventManager.PlayerJumped += OnPlayerJumped;
+        PlayerRb = gameObject.GetComponent<Rigidbody>();
         isGrounded = true;
-        
     }
     private void OnDisable()
     {
         if (InputManager.Instance == null) return;  
         InputManager.Instance.InputMapActions.Player.Movement.performed -= Movement;
         EventManager.PlayerJumped -= OnPlayerJumped;
-
     }
     private void Movement(InputAction.CallbackContext ctx)
     {
         if (!isGrounded) return;
-        Vector2 ourValue = ctx.ReadValue<Vector2>();
-        Vector3 translation = new Vector3(ourValue.x, 0f, 0f) * Time.deltaTime;
-        Vector3 newPosition = transform.position + translation;
-        newPosition.x = Mathf.Clamp(newPosition.x, -3.2f, 3.2f);
-        transform.position = newPosition;
-        
-        //Debug.Log($"OnTry, {ourValue}");
+        Vector2 input = ctx.ReadValue<Vector2>();
+        Vector3 move = new Vector3(input.x, 0f, 0f) * speed * Time.deltaTime;
+        Vector3 targetPosition = PlayerRb.position + move;
+        targetPosition.x = Mathf.Clamp(targetPosition.x, minX, maxX);
+        PlayerRb.MovePosition(targetPosition);
     }
 
     private void OnCollisionEnter(Collision collision)
     {
         if (collision.collider.gameObject.CompareTag("Pipe"))
         {
-            Debug.Log("isGrounded");
+            //Debug.Log("isGrounded");
             isGrounded = true;
         }
         else
         {
-            Debug.Log("isNOTGrounded");
+            //Debug.Log("isNOTGrounded");
             isGrounded = false;
         }
     }

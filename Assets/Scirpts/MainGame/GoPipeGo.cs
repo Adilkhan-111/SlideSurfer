@@ -8,10 +8,11 @@ public class GoPipeGo : MonoBehaviour
     [SerializeField] private float Speed;
     private void Update()
     {
-        transform.Translate(Vector3.forward * Speed * Time.deltaTime);
-        if(transform.position.z == ZBorderReset)
+        transform.Translate(Vector3.back * Speed * Time.deltaTime);
+        if(transform.position.z <= ZBorderReset)
         {
-            transform.position = new Vector3(transform.position.x, transform.position.x, ZBorderSpawn);
+            Debug.Log("Paparazi");
+            transform.position = new Vector3(transform.position.x, transform.position.y, ZBorderSpawn);
         }
     }
 }

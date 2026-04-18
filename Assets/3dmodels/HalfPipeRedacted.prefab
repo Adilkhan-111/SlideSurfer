@@ -181,6 +181,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: HalfPipeRedacted
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: feb34e6481f3ec44dbb809fb1b4e7dc4,
+        type: 3}
+      propertyPath: m_TagString
+      value: Pipe
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: 3779745573541866595, guid: feb34e6481f3ec44dbb809fb1b4e7dc4, type: 3}
