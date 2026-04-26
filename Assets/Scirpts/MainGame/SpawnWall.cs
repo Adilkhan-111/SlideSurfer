@@ -28,6 +28,7 @@ public class SpawnWall : MonoBehaviour
         dwPool = new ObjectPool(dw_prefab, 3);
         swGen = new PosGenerate(SwPositionsX);
         
+        
         isReady = true;
     }
 
@@ -78,7 +79,8 @@ public class SpawnWall : MonoBehaviour
         float posX = swGen.GeneratePos();
         float rotZ = swGen.GetRotation();
         obj.transform.position = new Vector3(posX, obj.transform.position.y, StartPosZ);
-        obj.transform.eulerAngles = new Vector3(obj.transform.rotation.x, obj.transform.rotation.y, rotZ);
+        GetComponentInChildren<Transform>().localEulerAngles =  new Vector3(obj.transform.rotation.x, obj.transform.rotation.y, rotZ);
+        //obj.transform.eulerAngles = new Vector3(obj.transform.rotation.x, obj.transform.rotation.y, rotZ);
         Debug.Log(rotZ);
         tempObj.Add(obj);
     }
