@@ -14,9 +14,10 @@ public class SpawnWall : MonoBehaviour
     [SerializeField] List<float> SwPositionsX;
     [SerializeField] List<float> DwPositionsX;
     [SerializeField] List<GameObject> tempObj;
-    private float count;
+    
     [SerializeField] float SecBetween;
     private PosGenerate swGen;
+    private PosGenerate dwGen;
     private bool isReady;
 
     private void Awake()
@@ -27,6 +28,7 @@ public class SpawnWall : MonoBehaviour
         swPool = new ObjectPool(sw_prefab, 3);
         dwPool = new ObjectPool(dw_prefab, 3);
         swGen = new PosGenerate(SwPositionsX);
+        dwGen = new PosGenerate(DwPositionsX);
         
         
         isReady = true;
@@ -56,12 +58,21 @@ public class SpawnWall : MonoBehaviour
 
     private IEnumerator DelayCoroutine()
     {
+        int typeOfWall = Random.Range(0, 2);
+        
+        if(typeOfWall == 0)
+        {
+            GenSWobs();
+        }
+        else if(typeOfWall == 1)
+        {
+            GenDWobs();
+        }
+            /*GameObject obj = swPool.Get();
+            float posX = swGen.GeneratePos();
+            obj.transform.position = new Vector3(posX, obj.transform.position.y, StartPosZ);
+            tempObj.Add(obj);*/
 
-        /*GameObject obj = swPool.Get();
-        float posX = swGen.GeneratePos();
-        obj.transform.position = new Vector3(posX, obj.transform.position.y, StartPosZ);
-        tempObj.Add(obj);*/
-        GenObj();
 
 
         isReady = false;
@@ -71,7 +82,7 @@ public class SpawnWall : MonoBehaviour
     }
 
 
-    public void GenObj()
+    public void GenSWobs()
     {
         //Debug.Log("attempt");
         
@@ -79,9 +90,22 @@ public class SpawnWall : MonoBehaviour
         float posX = swGen.GeneratePos();
         float rotZ = swGen.GetRotation();
         obj.transform.position = new Vector3(posX, obj.transform.position.y, StartPosZ);
-        GetComponentInChildren<Transform>().localEulerAngles =  new Vector3(obj.transform.rotation.x, obj.transform.rotation.y, rotZ);
+        obj.transform.eulerAngles =  new Vector3(obj.transform.rotation.x, obj.transform.rotation.y, rotZ);
         //obj.transform.eulerAngles = new Vector3(obj.transform.rotation.x, obj.transform.rotation.y, rotZ);
         Debug.Log(rotZ);
+        tempObj.Add(obj);
+    }
+    public void GenDWobs()
+    {
+        //Debug.Log("attempt");
+
+        GameObject obj = dwPool.Get();
+        float posX = dwGen.GeneratePos();
+        float rotZ = dwGen.GetRotation();
+        obj.transform.position = new Vector3(posX, obj.transform.position.y, StartPosZ);
+        obj.transform.eulerAngles = new Vector3(obj.transform.rotation.x, obj.transform.rotation.y, rotZ);
+        //obj.transform.eulerAngles = new Vector3(obj.transform.rotation.x, obj.transform.rotation.y, rotZ);
+        //Debug.Log(rotZ);
         tempObj.Add(obj);
     }
     public void Check()
@@ -92,6 +116,7 @@ public class SpawnWall : MonoBehaviour
             {
 
                 swPool.Release(tempObj[i]);
+                dwPool.Release(tempObj[i]);
                 tempObj.RemoveAt(i);
             }
         }
