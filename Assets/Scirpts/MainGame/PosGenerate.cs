@@ -5,7 +5,7 @@ using UnityEngine;
 public class PosGenerate : MonoBehaviour
 {
     private List<float> _positions;
-
+    private int rIndex;
     public PosGenerate(List<float> positions)
     {
         _positions = positions;
@@ -15,7 +15,50 @@ public class PosGenerate : MonoBehaviour
     public float GeneratePos()
     {
 
-        int rnum = Random.Range(0, _positions.Count);
-        return _positions[rnum];
+        rIndex = Random.Range(0, _positions.Count);
+        return _positions[rIndex];
+    }
+
+    public float GetRotation()
+    {
+        if(_positions.Count == 3)
+        {
+            
+            switch (rIndex)
+            {
+                case 0:
+                    return -22f;
+                    
+                case 1:
+                    return 0f;
+                    
+                case 2:
+                    return 22f;
+                    
+                default:
+                    return 0f;
+                    
+            }
+
+                
+        }
+        else if(_positions.Count == 2)
+        {
+            switch (rIndex)
+            {
+                case 0:
+                    return -45f;
+                case 1:
+                    return 0f;
+                default:
+                    return 0f;
+            }
+        }
+        else
+        {
+            return 0f;
+        }
+        
+
     }
 }
