@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class JumpNearBorder : MonoBehaviour
 {
-    [SerializeField] private float JumpCooldown;
+    public float JumpCooldown;
     [SerializeField] private float jumpForce;
     private bool canJump = true;
     private float jumpCount = 0;
@@ -14,13 +14,14 @@ public class JumpNearBorder : MonoBehaviour
     {
         if (other.gameObject.CompareTag("Player") & canJump)
         {
+            EventManager.OnPlayerJumped();
             jumpCount += 1;
             Debug.Log($"trigger, {jumpCount}");
             Rigidbody player_rb = other.gameObject.GetComponent<Rigidbody>();
             player_rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-            EventManager.OnPlayerJumped();
+            
             StartCoroutine(CooldownCoroutine());
-        }    
+        }
     }
 
     private IEnumerator CooldownCoroutine()

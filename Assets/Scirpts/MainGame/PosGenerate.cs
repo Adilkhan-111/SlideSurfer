@@ -54,6 +54,17 @@ public class PosGenerate : MonoBehaviour
                     return 0f;
             }
         }
+        else if(_positions.Count == 1)
+        {
+            switch (rIndex)
+            {
+                case 0:
+                    return 0f;
+                default:
+                    return 0f;
+
+            }
+        }
         else
         {
             return 0f;

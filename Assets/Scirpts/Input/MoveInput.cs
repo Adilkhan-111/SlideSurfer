@@ -39,17 +39,18 @@ public class MoveInput : MonoBehaviour
     {
         if (collision.collider.gameObject.CompareTag("Pipe"))
         {
-            //Debug.Log("isGrounded");
+            
             isGrounded = true;
         }
         else
         {
-            //Debug.Log("isNOTGrounded");
+            
             isGrounded = false;
         }
     }
     private void OnPlayerJumped()
     {
+        
         isGrounded = false;
     }
 }

@@ -12,7 +12,7 @@ public class GoPipeGo : MonoBehaviour
         transform.Translate(Vector3.back * Speed * Time.deltaTime);
         if(transform.position.z <= ZBorderReset & !IsObstacle)
         {
-            Debug.Log("Paparazi");
+            
             transform.position = new Vector3(transform.position.x, transform.position.y, ZBorderSpawn);
         }
     }

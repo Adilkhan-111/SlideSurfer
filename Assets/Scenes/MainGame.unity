@@ -686,8 +686,12 @@ MonoBehaviour:
   DwPositionsX:
   - -1.8
   - 1.5
+  GwPositionsX:
+  - 0
   tempObj: []
   SecBetween: 2
+  isAwaibleForG: 0
+  jnb: {fileID: 206399632}
 --- !u!4 &701700570
 Transform:
   m_ObjectHideFlags: 0
@@ -1509,7 +1513,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isGrounded: 0
-  PlayerRb: {fileID: 0}
+  PlayerRb: {fileID: 1647652472}
   speed: 1
 --- !u!1 &1762363981 stripped
 GameObject:
