@@ -8,7 +8,7 @@ public class JumpNearBorder : MonoBehaviour
     [SerializeField] private float jumpForce;
     private bool canJump = true;
     private bool readyForAn;
-    private float jumpCount = 0;
+    
     private float toBeSureCounter = 11;
 
 
@@ -17,7 +17,7 @@ public class JumpNearBorder : MonoBehaviour
         if (other.gameObject.CompareTag("Player") & canJump)
         {
             
-            jumpCount += 1;
+            
             
             Rigidbody player_rb = other.gameObject.GetComponent<Rigidbody>();
             player_rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
@@ -32,7 +32,7 @@ public class JumpNearBorder : MonoBehaviour
     {
         if (toBeSureCounter <= 10 || readyForAn)
         {
-            Debug.Log($"tobesureCounter: {toBeSureCounter}");
+            
             EventManager.OnPlayerJumped();
             readyForAn = false;
             toBeSureCounter++;

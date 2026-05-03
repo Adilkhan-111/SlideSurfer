@@ -27,8 +27,16 @@ public class SpawnWall : MonoBehaviour
     private bool isReady;
 
     public JumpNearBorder jnb;
-    
 
+    private bool IsPlayerDead;
+    private void OnEnable()
+    {
+        EventManager.PlayerDied += OnPlayerDied;
+    }
+    private void OnDisable()
+    {
+        EventManager.PlayerDied -= OnPlayerDied;
+    }
     private void Awake()
     {
         tempObj = new List<GameObject>();
@@ -50,7 +58,7 @@ public class SpawnWall : MonoBehaviour
     
     private void Update()
     {
-        
+        if (IsPlayerDead) return;
         if (isReady)
         {
             StartCoroutine(DelayCoroutine());
@@ -157,5 +165,9 @@ public class SpawnWall : MonoBehaviour
                 tempObj.RemoveAt(i);
             }
         }
+    }
+    public void OnPlayerDied()
+    {
+        IsPlayerDead = true;
     }
 }

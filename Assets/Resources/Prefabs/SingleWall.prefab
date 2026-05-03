@@ -180,5 +180,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ZBorderSpawn: 120
   ZBorderReset: -60
-  Speed: 10
+  Speed: 15
   IsObstacle: 1
+  IsPlayerDead: 0

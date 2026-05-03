@@ -46,7 +46,7 @@ public class MoveInput : MonoBehaviour
         }
         if (collision.collider.gameObject.CompareTag("Obstacle"))
         {
-            Debug.Log("PlayerDied");
+            
             EventManager.OnPlayerDied();
             gameObject.SetActive(false);
         }

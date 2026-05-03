@@ -27,13 +27,13 @@ public class PosGenerate
             switch (rIndex)
             {
                 case 0:
-                    return -22f;
+                    return -20f;
                     
                 case 1:
                     return 0f;
                     
                 case 2:
-                    return 22f;
+                    return 20f;
                     
                 default:
                     return 0f;

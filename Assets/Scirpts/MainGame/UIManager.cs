@@ -9,17 +9,23 @@ public class UIManager : MonoBehaviour
 {
 
     public Image defeatImage;
-
+    public TextMeshProUGUI ScoreTXT;
+    private ScoreCounter ScoreCt;
+    
 
     private void OnEnable()
     {
         EventManager.PlayerDied += OnPlayerDied;
+        ScoreCt = gameObject.GetComponentInChildren<ScoreCounter>();
     }
     private void OnDisable()
     {
         EventManager.PlayerDied -= OnPlayerDied;
     }
-
+    private void Update()
+    {
+        ScoreTXT.text = $"Score: {ScoreCt.Score}";
+    }
 
 
     private void OnPlayerDied()
