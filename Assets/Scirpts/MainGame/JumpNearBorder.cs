@@ -7,6 +7,7 @@ public class JumpNearBorder : MonoBehaviour
     public float JumpCooldown;
     [SerializeField] private float jumpForce;
     private bool canJump = true;
+    private bool readyForAn;
     private float jumpCount = 0;
 
 
@@ -14,19 +15,30 @@ public class JumpNearBorder : MonoBehaviour
     {
         if (other.gameObject.CompareTag("Player") & canJump)
         {
-            EventManager.OnPlayerJumped();
+            
             jumpCount += 1;
             Debug.Log($"trigger, {jumpCount}");
             Rigidbody player_rb = other.gameObject.GetComponent<Rigidbody>();
             player_rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-            
+            readyForAn = true;
             StartCoroutine(CooldownCoroutine());
+            
+        }
+    }
+
+    private void Update()
+    {
+        if (readyForAn)
+        {
+            EventManager.OnPlayerJumped();
+            readyForAn = false;
         }
     }
 
     private IEnumerator CooldownCoroutine()
     {
         canJump = false;
+        
         yield return new  WaitForSeconds(JumpCooldown);
         canJump = true;
     }
