@@ -38,6 +38,7 @@ public class SpawnWall : MonoBehaviour
         swPool = new ObjectPool(sw_prefab, 3);
         dwPool = new ObjectPool(dw_prefab, 3);
         gwPool = new ObjectPool(gw_prefab, 3);
+        
         swGen = new PosGenerate(SwPositionsX);
         dwGen = new PosGenerate(DwPositionsX);
         gwGen = new PosGenerate(GwPositionsX);

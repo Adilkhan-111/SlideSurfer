@@ -10,4 +10,10 @@ public class EventManager : MonoBehaviour
     {
         PlayerJumped?.Invoke();
     }
+
+    public static event Action PlayerDied;
+    public static void OnPlayerDied()
+    {
+        PlayerDied?.Invoke();
+    }
 }

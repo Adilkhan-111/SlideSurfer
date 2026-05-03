@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PosGenerate : MonoBehaviour
+public class PosGenerate
 {
     private List<float> _positions;
     private int rIndex;

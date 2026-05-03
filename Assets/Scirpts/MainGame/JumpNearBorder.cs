@@ -9,6 +9,7 @@ public class JumpNearBorder : MonoBehaviour
     private bool canJump = true;
     private bool readyForAn;
     private float jumpCount = 0;
+    private float toBeSureCounter = 11;
 
 
     private void OnTriggerEnter(Collider other)
@@ -17,10 +18,11 @@ public class JumpNearBorder : MonoBehaviour
         {
             
             jumpCount += 1;
-            Debug.Log($"trigger, {jumpCount}");
+            
             Rigidbody player_rb = other.gameObject.GetComponent<Rigidbody>();
             player_rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
             readyForAn = true;
+            toBeSureCounter = 0;
             StartCoroutine(CooldownCoroutine());
             
         }
@@ -28,10 +30,12 @@ public class JumpNearBorder : MonoBehaviour
 
     private void Update()
     {
-        if (readyForAn)
+        if (toBeSureCounter <= 10 || readyForAn)
         {
+            Debug.Log($"tobesureCounter: {toBeSureCounter}");
             EventManager.OnPlayerJumped();
             readyForAn = false;
+            toBeSureCounter++;
         }
     }
 

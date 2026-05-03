@@ -8,7 +8,7 @@ public class MoveInput : MonoBehaviour
 {
     [SerializeField] private bool isGrounded;
     
-    [SerializeField] private Rigidbody PlayerRb;
+    private Rigidbody PlayerRb;
     [SerializeField] private float speed = 5f;
     private const float minX = -3.2f;
     private const float maxX = 3.2f;
@@ -44,7 +44,12 @@ public class MoveInput : MonoBehaviour
             
             isGrounded = true;
         }
-        
+        if (collision.collider.gameObject.CompareTag("Obstacle"))
+        {
+            Debug.Log("PlayerDied");
+            EventManager.OnPlayerDied();
+            gameObject.SetActive(false);
+        }
     }
     
     private void OnPlayerJumped()
