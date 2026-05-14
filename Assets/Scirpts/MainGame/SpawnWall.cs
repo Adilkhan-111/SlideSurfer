@@ -6,9 +6,9 @@ using UnityEngine;
 
 public class SpawnWall : MonoBehaviour
 {
-    private GameObject sw_prefab;
-    private GameObject dw_prefab;
-    private GameObject gw_prefab;
+    public GameObject sw_prefab;
+    public GameObject dw_prefab;
+    public GameObject gw_prefab;
     private ObjectPool swPool;
     private ObjectPool dwPool;
     private ObjectPool gwPool;
@@ -18,8 +18,8 @@ public class SpawnWall : MonoBehaviour
     [SerializeField] List<float> DwPositionsX;
     [SerializeField] List<float> GwPositionsX;
     [SerializeField] List<GameObject> tempObj;
-    
-    [SerializeField] float SecBetween;
+
+    public float SecBetween = 5;
     private PosGenerate swGen;
     private PosGenerate dwGen;
     private PosGenerate gwGen;
@@ -32,6 +32,7 @@ public class SpawnWall : MonoBehaviour
     private void OnEnable()
     {
         EventManager.PlayerDied += OnPlayerDied;
+        
     }
     private void OnDisable()
     {
@@ -39,6 +40,7 @@ public class SpawnWall : MonoBehaviour
     }
     private void Awake()
     {
+
         tempObj = new List<GameObject>();
         sw_prefab = Resources.Load<GameObject>("Prefabs/SingleWall");
         dw_prefab = Resources.Load<GameObject>("Prefabs/DoubleWall");
@@ -149,7 +151,7 @@ public class SpawnWall : MonoBehaviour
     {
         //some coroutine for jump cd
         isAwaibleForG = false;
-        yield return new WaitForSeconds(jnb.JumpCooldown);
+        yield return new WaitForSeconds(jnb.JumpCooldown + 1);
         isAwaibleForG = true;
     }
     public void Check()

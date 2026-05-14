@@ -180,6 +180,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ZBorderSpawn: 120
   ZBorderReset: -60
-  Speed: 15
+  gameSettings: {fileID: 11400000, guid: 7b6e4421bbed57c4f803e4a9971ded76, type: 2}
   IsObstacle: 1
   IsPlayerDead: 0

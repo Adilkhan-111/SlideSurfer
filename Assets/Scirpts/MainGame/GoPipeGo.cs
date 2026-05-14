@@ -5,12 +5,17 @@ public class GoPipeGo : MonoBehaviour
 {
     [SerializeField] private float ZBorderSpawn;
     [SerializeField] private float ZBorderReset;
-    [SerializeField] private float Speed;
+    public GameSettings gameSettings;
     [SerializeField] private bool IsObstacle;
     [SerializeField] private bool IsPlayerDead;
+    private void Awake()
+    {
+        gameSettings.Reset();
+    }
     private void OnEnable()
     {
         EventManager.PlayerDied += OnPlayerDied;
+        
     }
     private void OnDisable()
     {
@@ -20,7 +25,7 @@ public class GoPipeGo : MonoBehaviour
     {
         if (IsPlayerDead) return;
 
-        transform.Translate(Vector3.back * Speed * Time.deltaTime);
+        transform.Translate(Vector3.back * gameSettings.currentSpeed * Time.deltaTime);
         if(transform.position.z <= ZBorderReset & !IsObstacle)
         {
             

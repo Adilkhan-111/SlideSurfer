@@ -1117,6 +1117,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8821d3dd2ee5a7a47b68f3442751c40c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  sw_prefab: {fileID: 0}
+  dw_prefab: {fileID: 0}
+  gw_prefab: {fileID: 0}
   StartPosZ: 80
   EndPosZ: -30
   SwPositionsX:
@@ -1129,7 +1132,7 @@ MonoBehaviour:
   GwPositionsX:
   - 0
   tempObj: []
-  SecBetween: 1
+  SecBetween: 5
   isAwaibleForG: 0
   jnb: {fileID: 206399632}
 --- !u!4 &701700570
@@ -1242,7 +1245,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ZBorderSpawn: 120
   ZBorderReset: -60
-  Speed: 10
+  gameSettings: {fileID: 0}
   IsObstacle: 0
   IsPlayerDead: 0
 --- !u!54 &759041295
@@ -1524,6 +1527,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   WorkScore: 0
   Score: 0
+  gameSettings: {fileID: 11400000, guid: 7b6e4421bbed57c4f803e4a9971ded76, type: 2}
 --- !u!1 &1309182783
 GameObject:
   m_ObjectHideFlags: 0
@@ -2143,7 +2147,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ZBorderSpawn: 120
   ZBorderReset: -60
-  Speed: 10
+  gameSettings: {fileID: 0}
   IsObstacle: 0
   IsPlayerDead: 0
 --- !u!1 &2146365708
