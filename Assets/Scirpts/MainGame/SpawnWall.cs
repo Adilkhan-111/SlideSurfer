@@ -27,7 +27,7 @@ public class SpawnWall : MonoBehaviour
     private bool isReady;
 
     public JumpNearBorder jnb;
-
+    public GameSettings gameSettings;
     private bool IsPlayerDead;
     private void OnEnable()
     {
@@ -104,7 +104,7 @@ public class SpawnWall : MonoBehaviour
         }
        
         isReady = false;
-        yield return new WaitForSeconds(SecBetween);
+        yield return new WaitForSeconds(gameSettings.currentSB);
         isReady = true;
         
     }

@@ -1135,6 +1135,7 @@ MonoBehaviour:
   SecBetween: 5
   isAwaibleForG: 0
   jnb: {fileID: 206399632}
+  gameSettings: {fileID: 11400000, guid: 7b6e4421bbed57c4f803e4a9971ded76, type: 2}
 --- !u!4 &701700570
 Transform:
   m_ObjectHideFlags: 0

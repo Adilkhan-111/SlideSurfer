@@ -22,6 +22,7 @@ public class ScoreCounter : MonoBehaviour
     private void OnEnable()
     {
          _SpeedMultiplier = 0.166666f;
+        _SecMultiplier = 0.01875f;
         
         EventManager.PlayerDied += OnPlayerDied;
         
@@ -44,8 +45,13 @@ public class ScoreCounter : MonoBehaviour
         TempTemp += Time.deltaTime;
         
         Score = Mathf.FloorToInt(TempTemp);
+        if(gameSettings.currentSpeed >= 50 || gameSettings.currentSB <= 0.5f)
+        {
+            return;
+        }
         gameSettings.currentSpeed += _SpeedMultiplier * Time.deltaTime;
-        Debug.Log(gameSettings.currentSpeed);
+        gameSettings.currentSB -= _SecMultiplier * Time.deltaTime;
+        Debug.Log(gameSettings.currentSB);
         
         
 
