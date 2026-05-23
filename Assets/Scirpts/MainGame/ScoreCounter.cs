@@ -18,11 +18,12 @@ public class ScoreCounter : MonoBehaviour
     private float _SecMultiplier;
 
     private bool IsAllowed = true;
-    
+    private bool isReachedMaxValue;
+
     private void OnEnable()
     {
-         _SpeedMultiplier = 0.166666f;
-        _SecMultiplier = 0.01875f;
+         _SpeedMultiplier = 0.222222f;
+        _SecMultiplier = 0.0138888f;
         
         EventManager.PlayerDied += OnPlayerDied;
         
@@ -45,20 +46,32 @@ public class ScoreCounter : MonoBehaviour
         TempTemp += Time.deltaTime;
         
         Score = Mathf.FloorToInt(TempTemp);
-        if(gameSettings.currentSpeed >= 50 || gameSettings.currentSB <= 0.5f)
+        if (!isReachedMaxValue)
         {
-            return;
+            gameSettings.currentSpeed = Mathf.Min(gameSettings.currentSpeed += _SpeedMultiplier * Time.deltaTime, gameSettings.maxSpeed);
+            gameSettings.currentSB = Mathf.Max(gameSettings.currentSB -= _SecMultiplier * Time.deltaTime, gameSettings.minSB);
+            CheckForMaxOrMin();
         }
-        gameSettings.currentSpeed += _SpeedMultiplier * Time.deltaTime;
-        gameSettings.currentSB -= _SecMultiplier * Time.deltaTime;
-        Debug.Log(gameSettings.currentSB);
+        
+        
+        
         
         
 
-
+        
     }
 
-    
+    public void CheckForMaxOrMin()
+    {
+        if (gameSettings.currentSpeed >= gameSettings.maxSpeed || gameSettings.currentSB <= gameSettings.minSB)
+        {
+            gameSettings.currentSpeed = gameSettings.maxSpeed;
+            gameSettings.currentSB = gameSettings.minSB;
+            isReachedMaxValue = true;
+        }
+    }
+
+
     public void OnPlayerDied()
     {
         IsAllowed = false;

@@ -40,7 +40,7 @@ public class SpawnWall : MonoBehaviour
     }
     private void Awake()
     {
-
+        gameSettings.ResetValues();
         tempObj = new List<GameObject>();
         sw_prefab = Resources.Load<GameObject>("Prefabs/SingleWall");
         dw_prefab = Resources.Load<GameObject>("Prefabs/DoubleWall");
@@ -151,7 +151,7 @@ public class SpawnWall : MonoBehaviour
     {
         //some coroutine for jump cd
         isAwaibleForG = false;
-        yield return new WaitForSeconds(jnb.JumpCooldown + 1);
+        yield return new WaitForSeconds(jnb.JumpCooldown + 2);
         isAwaibleForG = true;
     }
     public void Check()

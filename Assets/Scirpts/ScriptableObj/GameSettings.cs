@@ -7,13 +7,17 @@ public class GameSettings : ScriptableObject
     public float initialSpeed;
     public float initialSB;
 
+    public float maxSpeed;
+    public float minSB;
+
     [System.NonSerialized]
     public float currentSpeed;
     [System.NonSerialized]
     public float currentSB;
 
-    public void Reset()
+    public void ResetValues()
     {
+        Debug.Log("WOW");
         currentSpeed = initialSpeed;
         currentSB = initialSB;
     }
