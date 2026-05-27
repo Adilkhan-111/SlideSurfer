@@ -87,6 +87,7 @@ public class SpawnWall : MonoBehaviour
         if(typeOfWall == 0 & isAwaibleForG)
         {
             //do it only when allowed
+            
             GenGWobs();
            
         }
@@ -151,8 +152,11 @@ public class SpawnWall : MonoBehaviour
     {
         //some coroutine for jump cd
         isAwaibleForG = false;
-        yield return new WaitForSeconds(jnb.JumpCooldown + 2);
+        int cForG = jnb.JumpCooldown * 2;
+        yield return new WaitForSeconds(cForG);
+        Debug.Log($"coldown over, jnb jCool = {cForG}");
         isAwaibleForG = true;
+
     }
     public void Check()
     {

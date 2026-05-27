@@ -17,7 +17,7 @@ public class GameSettings : ScriptableObject
 
     public void ResetValues()
     {
-        Debug.Log("WOW");
+        
         currentSpeed = initialSpeed;
         currentSB = initialSB;
     }

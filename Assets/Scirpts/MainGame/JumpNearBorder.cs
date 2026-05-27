@@ -4,14 +4,17 @@ using UnityEngine;
 
 public class JumpNearBorder : MonoBehaviour
 {
-    public float JumpCooldown;
+    public int JumpCooldown = 8;
     [SerializeField] private float jumpForce;
     private bool canJump = true;
     private bool readyForAn;
     
     private float toBeSureCounter = 11;
 
-
+    private void Start()
+    {
+        JumpCooldown = 8;
+    }
     private void OnTriggerEnter(Collider other)
     {
         if (other.gameObject.CompareTag("Player") & canJump)
