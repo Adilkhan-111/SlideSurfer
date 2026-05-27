@@ -1099,7 +1099,7 @@ GameObject:
   - component: {fileID: 701700570}
   - component: {fileID: 701700569}
   m_Layer: 0
-  m_Name: WallManager
+  m_Name: SpawnManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

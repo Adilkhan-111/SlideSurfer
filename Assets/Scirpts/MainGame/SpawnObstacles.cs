@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Net;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.SocialPlatforms.Impl;
 
-public class SpawnWall : MonoBehaviour
+public class SpawnObstacles : MonoBehaviour
 {
     public GameObject sw_prefab;
     public GameObject dw_prefab;
@@ -29,6 +30,11 @@ public class SpawnWall : MonoBehaviour
     public JumpNearBorder jnb;
     public GameSettings gameSettings;
     private bool IsPlayerDead;
+
+
+    private float TempTemp;
+    private float Score;
+
     private void OnEnable()
     {
         EventManager.PlayerDied += OnPlayerDied;
@@ -61,6 +67,19 @@ public class SpawnWall : MonoBehaviour
     private void Update()
     {
         if (IsPlayerDead) return;
+
+        TempTemp += Time.deltaTime;
+
+        Score = Mathf.FloorToInt(TempTemp);
+
+        if(Score >= 150)
+        {
+            Debug.Log("true");
+            isAwaibleForG = false;
+        }
+
+
+
         if (isReady)
         {
             StartCoroutine(DelayCoroutine());
@@ -152,9 +171,10 @@ public class SpawnWall : MonoBehaviour
     {
         //some coroutine for jump cd
         isAwaibleForG = false;
+        //multiply by 2 because cooldown on Great wall doesnt work proper, and seems like it waits 2 times less
         int cForG = jnb.JumpCooldown * 2;
         yield return new WaitForSeconds(cForG);
-        Debug.Log($"coldown over, jnb jCool = {cForG}");
+        
         isAwaibleForG = true;
 
     }
