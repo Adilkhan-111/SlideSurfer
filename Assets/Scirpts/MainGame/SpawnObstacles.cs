@@ -7,34 +7,49 @@ using UnityEngine.SocialPlatforms.Impl;
 
 public class SpawnObstacles : MonoBehaviour
 {
+    [Header("Obstacle prefabs")]
     public GameObject sw_prefab;
     public GameObject dw_prefab;
     public GameObject gw_prefab;
-    private ObjectPool swPool;
-    private ObjectPool dwPool;
-    private ObjectPool gwPool;
+    public GameObject shark_prefab;
+    [Header("Positions")]
     [SerializeField] float StartPosZ;
     [SerializeField] float EndPosZ;
     [SerializeField] List<float> SwPositionsX;
     [SerializeField] List<float> DwPositionsX;
     [SerializeField] List<float> GwPositionsX;
-    [SerializeField] List<GameObject> tempObj;
+    [SerializeField] List<float> SharkPositionsX;
 
+    [Header("GameSet, jumpNB and Sec between")]
     public float SecBetween = 5;
+    public JumpNearBorder jnb;
+    public GameSettings gameSettings;
+
+    #region Object pools
+    private ObjectPool swPool;
+    private ObjectPool dwPool;
+    private ObjectPool gwPool;
+    private ObjectPool sharkPool;
+    #endregion
+    #region Position generators
     private PosGenerate swGen;
     private PosGenerate dwGen;
     private PosGenerate gwGen;
-    [SerializeField] bool isAwaibleForG;
+    private PosGenerate sharkGen;
+    #endregion
+    #region list for traking objects
+    private List<GameObject> tempObj;
+    #endregion
+    #region Is awaible for GREAT WALL//SHARK, is player DEAD and is ready for JUMP bools
+    private bool isAwaibleForG;
+    private bool isAwaibleForS;
     private bool isReady;
-
-    public JumpNearBorder jnb;
-    public GameSettings gameSettings;
     private bool IsPlayerDead;
-
-
+    #endregion
+    #region var for traking time
     private float TempTemp;
     private float Score;
-
+    #endregion
     private void OnEnable()
     {
         EventManager.PlayerDied += OnPlayerDied;
@@ -51,15 +66,19 @@ public class SpawnObstacles : MonoBehaviour
         sw_prefab = Resources.Load<GameObject>("Prefabs/SingleWall");
         dw_prefab = Resources.Load<GameObject>("Prefabs/DoubleWall");
         gw_prefab = Resources.Load<GameObject>("Prefabs/GreatWall");
+        shark_prefab = Resources.Load<GameObject>("Prefabs/Shark");
         swPool = new ObjectPool(sw_prefab, 3);
         dwPool = new ObjectPool(dw_prefab, 3);
         gwPool = new ObjectPool(gw_prefab, 3);
+        sharkPool = new ObjectPool(shark_prefab, 3);
         
         swGen = new PosGenerate(SwPositionsX);
         dwGen = new PosGenerate(DwPositionsX);
         gwGen = new PosGenerate(GwPositionsX);
-
+        sharkGen = new PosGenerate(SharkPositionsX);
+        
         isAwaibleForG = true;
+        isAwaibleForS = false;
         isReady = true;
     }
 
@@ -72,13 +91,17 @@ public class SpawnObstacles : MonoBehaviour
 
         Score = Mathf.FloorToInt(TempTemp);
 
-        if(Score >= 150)
+        if(Score >= 150) 
         {
             Debug.Log("true");
             isAwaibleForG = false;
         }
 
-
+        if(Score >= 5 & !isAwaibleForS) // 100 actually
+        {
+            Debug.Log("A hungry Shark has started his haunt");
+            isAwaibleForS = true;
+        }
 
         if (isReady)
         {
@@ -96,13 +119,19 @@ public class SpawnObstacles : MonoBehaviour
 
     private IEnumerator DelayCoroutine()
     {
-        int typeOfWall = Random.Range(0, 3);
+        int typeOfWall = Random.Range(0, 4);
+        
         if (!isAwaibleForG)
         {
             //switch up to other type of wall cause we are waiting for jump cd complete
-            typeOfWall = Random.Range(1, 3);
+            typeOfWall = Random.Range(1, 4);
 
         }
+        if (!isAwaibleForS)
+        {
+            typeOfWall = Random.Range(0, 3);
+        }
+
         if(typeOfWall == 0 & isAwaibleForG)
         {
             //do it only when allowed
@@ -122,8 +151,12 @@ public class SpawnObstacles : MonoBehaviour
             GenDWobs();
             
         }
-       
-        isReady = false;
+        else if(typeOfWall == 3 & isAwaibleForS)
+        {
+            GenSHARKobs();
+        }
+
+            isReady = false;
         yield return new WaitForSeconds(gameSettings.currentSB);
         isReady = true;
         
@@ -135,9 +168,9 @@ public class SpawnObstacles : MonoBehaviour
         
         GameObject obj = swPool.Get();
         float posX = swGen.GeneratePos();
-        float rotZ = swGen.GetRotation();
+        float rotZ = swGen.GetRotationForWall();
         obj.transform.position = new Vector3(posX, obj.transform.position.y, StartPosZ);
-        obj.transform.eulerAngles =  new Vector3(obj.transform.rotation.x, obj.transform.rotation.y, rotZ);
+        obj.transform.eulerAngles =  new Vector3(obj.transform.eulerAngles.x, obj.transform.eulerAngles.y, rotZ);
         
         
         tempObj.Add(obj);
@@ -147,9 +180,9 @@ public class SpawnObstacles : MonoBehaviour
         
         GameObject obj = dwPool.Get();
         float posX = dwGen.GeneratePos();
-        float rotZ = dwGen.GetRotation();
+        float rotZ = dwGen.GetRotationForWall();
         obj.transform.position = new Vector3(posX, obj.transform.position.y, StartPosZ);
-        obj.transform.eulerAngles = new Vector3(obj.transform.rotation.x, obj.transform.rotation.y, rotZ);
+        obj.transform.eulerAngles = new Vector3(obj.transform.eulerAngles.x, obj.transform.eulerAngles.y, rotZ);
         
         tempObj.Add(obj);
     }
@@ -158,14 +191,69 @@ public class SpawnObstacles : MonoBehaviour
         //spawn a great wall
         GameObject obj = gwPool.Get();
         float posX = gwGen.GeneratePos();
-        float rotZ = gwGen.GetRotation();
+        float rotZ = gwGen.GetRotationForWall();
         obj.transform.position = new Vector3(posX, obj.transform.position.y, StartPosZ);
-        obj.transform.eulerAngles = new Vector3(obj.transform.rotation.x, obj.transform.rotation.y, rotZ);
+        obj.transform.eulerAngles = new Vector3(obj.transform.eulerAngles.x, obj.transform.eulerAngles.y, rotZ);
 
         tempObj.Add(obj);
         //and then do coroutine cause we need to wait until jump cd is over
         StartCoroutine(WaitForCd());
     }
+    public void GenSHARKobs()
+    {
+        GameObject obj = sharkPool.Get();
+
+        
+        Rigidbody objRB = obj.GetComponentInChildren<Rigidbody>();
+
+        // Reset
+        if (objRB != null)
+        {
+            //objRB.velocity = Vector3.zero;
+            //objRB.angularVelocity = Vector3.zero;
+            
+            objRB.isKinematic = true;
+        }
+
+        float posX = sharkGen.GeneratePos();
+        float rotY = sharkGen.GetRotationForShark();
+
+        Transform childObj = obj.GetComponentInChildren<Transform>();
+
+        childObj.transform.position = new Vector3(posX, obj.transform.position.y, StartPosZ);
+
+        obj.transform.eulerAngles = new Vector3(obj.transform.eulerAngles.x, rotY, obj.transform.eulerAngles.z);
+        obj.transform.position = new Vector3(posX, obj.transform.position.y, StartPosZ);
+        
+
+
+        GoPipeGo objGPG = obj.GetComponent<GoPipeGo>();
+
+        if (posX == SharkPositionsX[0] || posX == SharkPositionsX[2])
+        {
+            if (objRB != null)
+            {
+                
+                objRB.isKinematic = false;
+                objRB.velocity = Vector3.zero;
+                objRB.angularVelocity = Vector3.zero;
+            }
+            Debug.Log("my pos x " + posX);
+            objGPG.JumpForward();
+        }
+        else
+        {
+            if (objRB != null)
+            {
+                objRB.isKinematic = true;
+            }
+            Debug.Log("No jump :(, my pos " + posX);
+        }
+        childObj.transform.position = new Vector3(posX, obj.transform.position.y, StartPosZ);
+        tempObj.Add(obj);
+    }
+
+
 
     private IEnumerator WaitForCd()
     {
@@ -188,6 +276,8 @@ public class SpawnObstacles : MonoBehaviour
                 swPool.Release(tempObj[i]);
                 dwPool.Release(tempObj[i]);
                 gwPool.Release(tempObj[i]);
+                sharkPool.Release(tempObj[i]);
+
                 tempObj.RemoveAt(i);
             }
         }

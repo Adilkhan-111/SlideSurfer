@@ -19,30 +19,30 @@ public class PosGenerate
         return _positions[rIndex];
     }
 
-    public float GetRotation()
+    public float GetRotationForWall()
     {
-        if(_positions.Count == 3)
+        if (_positions.Count == 3)
         {
-            
+
             switch (rIndex)
             {
                 case 0:
                     return -20f;
-                    
+
                 case 1:
                     return 0f;
-                    
+
                 case 2:
                     return 20f;
-                    
+
                 default:
                     return 0f;
-                    
+
             }
 
-                
+
         }
-        else if(_positions.Count == 2)
+        else if (_positions.Count == 2)
         {
             switch (rIndex)
             {
@@ -54,7 +54,7 @@ public class PosGenerate
                     return 0f;
             }
         }
-        else if(_positions.Count == 1)
+        else if (_positions.Count == 1)
         {
             switch (rIndex)
             {
@@ -69,7 +69,36 @@ public class PosGenerate
         {
             return 0f;
         }
-        
 
+
+    }
+    public float GetRotationForShark()
+    {
+        if (_positions.Count == 3)
+        {
+
+            switch (rIndex)
+            {
+                case 0:
+                    return -15f;
+
+                case 1:
+                    return 0f;
+
+                case 2:
+                    return 15f;
+
+                default:
+                    return 0f;
+
+            }
+
+
+        }
+        else
+        {
+            return 150f;
+            
+        }
     }
 }

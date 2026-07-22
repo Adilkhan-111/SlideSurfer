@@ -1,5 +1,3 @@
-
-
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -18,9 +16,7 @@ public class ObjectPool
             GameObject obj = GameObject.Instantiate(prefab);
             obj.SetActive(false);
             _objects.Add(obj);
-
         }
-
     }
 
     public GameObject Get()
@@ -28,7 +24,7 @@ public class ObjectPool
         var obj = _objects.FirstOrDefault(x => !x.activeInHierarchy);
         if (obj == null)
         {
-            obj = Create();
+            obj = Create();     
         }
         obj.SetActive(true);
         return obj;
@@ -36,6 +32,14 @@ public class ObjectPool
 
     public void Release(GameObject obj)
     {
+        // Reset Values
+        var rb = obj.GetComponentInChildren<Rigidbody>();
+        if (rb != null)
+        {
+            
+            rb.isKinematic = true;
+        }
+
         obj.SetActive(false);
     }
 
