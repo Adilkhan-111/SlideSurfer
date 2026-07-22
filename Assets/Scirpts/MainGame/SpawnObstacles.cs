@@ -97,7 +97,7 @@ public class SpawnObstacles : MonoBehaviour
             isAwaibleForG = false;
         }
 
-        if(Score >= 5 & !isAwaibleForS) // 100 actually
+        if(Score >= 150 & !isAwaibleForS) // 100 actually
         {
             Debug.Log("A hungry Shark has started his haunt");
             isAwaibleForS = true;
@@ -218,10 +218,6 @@ public class SpawnObstacles : MonoBehaviour
         float posX = sharkGen.GeneratePos();
         float rotY = sharkGen.GetRotationForShark();
 
-        Transform childObj = obj.GetComponentInChildren<Transform>();
-
-        childObj.transform.position = new Vector3(posX, obj.transform.position.y, StartPosZ);
-
         obj.transform.eulerAngles = new Vector3(obj.transform.eulerAngles.x, rotY, obj.transform.eulerAngles.z);
         obj.transform.position = new Vector3(posX, obj.transform.position.y, StartPosZ);
         
@@ -245,11 +241,12 @@ public class SpawnObstacles : MonoBehaviour
         {
             if (objRB != null)
             {
+                obj.transform.position = new Vector3(posX, 2, StartPosZ);
                 objRB.isKinematic = true;
             }
             Debug.Log("No jump :(, my pos " + posX);
         }
-        childObj.transform.position = new Vector3(posX, obj.transform.position.y, StartPosZ);
+        
         tempObj.Add(obj);
     }
 
