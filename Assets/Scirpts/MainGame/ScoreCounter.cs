@@ -17,14 +17,15 @@ public class ScoreCounter : MonoBehaviour
     private float _SpeedMultiplier;
     private float _SecMultiplier;
 
-    private bool IsAllowed = true;
+    private bool isAllowed = true;
+    private bool isGameHasStarted = false;
     private bool isReachedMaxValue;
 
     private void OnEnable()
     {
          _SpeedMultiplier = 0.222222f;
         _SecMultiplier = 0.0138888f;
-        
+        EventManager.GameHasStarted += OnGameHasStarted;
         EventManager.PlayerDied += OnPlayerDied;
         
     }
@@ -39,7 +40,7 @@ public class ScoreCounter : MonoBehaviour
     
     void Update()
     {
-        if (!IsAllowed) return;
+        if (!isAllowed || !isGameHasStarted) return;
         
         
 
@@ -74,6 +75,10 @@ public class ScoreCounter : MonoBehaviour
 
     public void OnPlayerDied()
     {
-        IsAllowed = false;
+        isAllowed = false;
+    }
+    public void OnGameHasStarted()
+    {
+        isGameHasStarted = true;
     }
 }

@@ -45,6 +45,7 @@ public class SpawnObstacles : MonoBehaviour
     private bool isAwaibleForS;
     private bool isReady;
     private bool IsPlayerDead;
+    private bool isGameHasStarted;
     #endregion
     #region var for traking time
     private float TempTemp;
@@ -53,7 +54,7 @@ public class SpawnObstacles : MonoBehaviour
     private void OnEnable()
     {
         EventManager.PlayerDied += OnPlayerDied;
-        
+        EventManager.GameHasStarted += OnGameHasStarted;
     }
     private void OnDisable()
     {
@@ -85,7 +86,7 @@ public class SpawnObstacles : MonoBehaviour
     
     private void Update()
     {
-        if (IsPlayerDead) return;
+        if (IsPlayerDead || !isGameHasStarted) return;
 
         TempTemp += Time.deltaTime;
 
@@ -282,5 +283,9 @@ public class SpawnObstacles : MonoBehaviour
     public void OnPlayerDied()
     {
         IsPlayerDead = true;
+    }
+    public void OnGameHasStarted()
+    {
+        isGameHasStarted = true;
     }
 }

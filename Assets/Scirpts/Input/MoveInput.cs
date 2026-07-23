@@ -35,6 +35,8 @@ public class MoveInput : MonoBehaviour
         Vector3 targetPosition = PlayerRb.position + move;
         targetPosition.x = Mathf.Clamp(targetPosition.x, minX, maxX);
         PlayerRb.MovePosition(targetPosition);
+        EventManager.OnGameHasStarted();
+        Debug.Log("asd" + Time.deltaTime);
     }
     
     private void OnCollisionEnter(Collision collision)

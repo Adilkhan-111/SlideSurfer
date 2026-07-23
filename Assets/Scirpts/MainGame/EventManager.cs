@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 public class EventManager : MonoBehaviour
@@ -15,5 +16,10 @@ public class EventManager : MonoBehaviour
     public static void OnPlayerDied()
     {
         PlayerDied?.Invoke();
+    }
+    public static event Action GameHasStarted;
+    public static void OnGameHasStarted()
+    {
+        GameHasStarted?.Invoke();
     }
 }

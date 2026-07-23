@@ -178,8 +178,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3dbb9eca7631a3444becb0f3afd58ff5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ZBorderSpawn: 120
-  ZBorderReset: -60
+  ZBorderSpawnPipe: 0
+  ZBorderResetPipe: 0
   gameSettings: {fileID: 11400000, guid: 7b6e4421bbed57c4f803e4a9971ded76, type: 2}
-  IsObstacle: 1
-  IsPlayerDead: 0
+  isObstacle: 1
+  isShark: 0
+  isPlayerDead: 0
+  isGameHasStarted: 0
+  initialHeight: 0

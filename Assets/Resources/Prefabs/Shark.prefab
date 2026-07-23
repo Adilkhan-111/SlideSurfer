@@ -49,10 +49,11 @@ MonoBehaviour:
   ZBorderSpawnPipe: 0
   ZBorderResetPipe: 0
   gameSettings: {fileID: 11400000, guid: 7b6e4421bbed57c4f803e4a9971ded76, type: 2}
-  IsObstacle: 1
-  IsShark: 1
-  IsPlayerDead: 0
-  InitialHeight: 0
+  isObstacle: 1
+  isShark: 1
+  isPlayerDead: 0
+  isGameHasStarted: 0
+  initialHeight: 0
 --- !u!54 &4592456646092940859
 Rigidbody:
   m_ObjectHideFlags: 0
