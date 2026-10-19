@@ -18,15 +18,17 @@ public class GoPipeGo : MonoBehaviour
         
         EventManager.PlayerDied += OnPlayerDied;
         EventManager.GameHasStarted += OnGameHasStarted;
+        // pooled objects are enabled after the start event has already fired
+        isGameHasStarted = EventManager.GameStarted;
         initialHeight = 14f;
     }
     private void OnDisable()
     {
         EventManager.PlayerDied -= OnPlayerDied;
+        EventManager.GameHasStarted -= OnGameHasStarted;
     }
     private void Update()
     {
-        Debug.Log(isGameHasStarted);
         if (isPlayerDead || !isGameHasStarted) return;
         if(gameSettings != null & !isShark)
         {

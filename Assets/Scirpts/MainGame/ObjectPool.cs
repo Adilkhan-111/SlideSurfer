@@ -21,10 +21,18 @@ public class ObjectPool
 
     public GameObject Get()
     {
-        var obj = _objects.FirstOrDefault(x => !x.activeInHierarchy);
+        GameObject obj = null;
+        for (int i = 0; i < _objects.Count; i++)
+        {
+            if (!_objects[i].activeInHierarchy)
+            {
+                obj = _objects[i];
+                break;
+            }
+        }
         if (obj == null)
         {
-            obj = Create();     
+            obj = Create();
         }
         obj.SetActive(true);
         return obj;

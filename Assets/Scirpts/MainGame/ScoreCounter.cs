@@ -33,6 +33,7 @@ public class ScoreCounter : MonoBehaviour
     private void OnDisable()
     {
         EventManager.PlayerDied -= OnPlayerDied;
+        EventManager.GameHasStarted -= OnGameHasStarted;
     }
     // Update is called once per frame
 

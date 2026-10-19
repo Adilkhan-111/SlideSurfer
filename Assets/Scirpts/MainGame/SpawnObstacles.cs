@@ -38,7 +38,7 @@ public class SpawnObstacles : MonoBehaviour
     private PosGenerate sharkGen;
     #endregion
     #region list for traking objects
-    private List<GameObject> tempObj;
+    private List<(GameObject obj, ObjectPool pool)> tempObj;
     #endregion
     #region Is awaible for GREAT WALL//SHARK, is player DEAD and is ready for JUMP bools
     private bool isAwaibleForG;
@@ -59,11 +59,12 @@ public class SpawnObstacles : MonoBehaviour
     private void OnDisable()
     {
         EventManager.PlayerDied -= OnPlayerDied;
+        EventManager.GameHasStarted -= OnGameHasStarted;
     }
     private void Awake()
     {
         gameSettings.ResetValues();
-        tempObj = new List<GameObject>();
+        tempObj = new List<(GameObject obj, ObjectPool pool)>();
         sw_prefab = Resources.Load<GameObject>("Prefabs/SingleWall");
         dw_prefab = Resources.Load<GameObject>("Prefabs/DoubleWall");
         gw_prefab = Resources.Load<GameObject>("Prefabs/GreatWall");
@@ -94,13 +95,11 @@ public class SpawnObstacles : MonoBehaviour
 
         if(Score >= 150) 
         {
-            Debug.Log("true");
             isAwaibleForG = false;
         }
 
         if(Score >= 150 & !isAwaibleForS) // 100 actually
         {
-            Debug.Log("A hungry Shark has started his haunt");
             isAwaibleForS = true;
         }
 
@@ -174,7 +173,7 @@ public class SpawnObstacles : MonoBehaviour
         obj.transform.eulerAngles =  new Vector3(obj.transform.eulerAngles.x, obj.transform.eulerAngles.y, rotZ);
         
         
-        tempObj.Add(obj);
+        tempObj.Add((obj, swPool));
     }
     public void GenDWobs()
     {
@@ -185,7 +184,7 @@ public class SpawnObstacles : MonoBehaviour
         obj.transform.position = new Vector3(posX, obj.transform.position.y, StartPosZ);
         obj.transform.eulerAngles = new Vector3(obj.transform.eulerAngles.x, obj.transform.eulerAngles.y, rotZ);
         
-        tempObj.Add(obj);
+        tempObj.Add((obj, dwPool));
     }
     public void GenGWobs()
     {
@@ -196,7 +195,7 @@ public class SpawnObstacles : MonoBehaviour
         obj.transform.position = new Vector3(posX, obj.transform.position.y, StartPosZ);
         obj.transform.eulerAngles = new Vector3(obj.transform.eulerAngles.x, obj.transform.eulerAngles.y, rotZ);
 
-        tempObj.Add(obj);
+        tempObj.Add((obj, gwPool));
         //and then do coroutine cause we need to wait until jump cd is over
         StartCoroutine(WaitForCd());
     }
@@ -235,7 +234,6 @@ public class SpawnObstacles : MonoBehaviour
                 objRB.velocity = Vector3.zero;
                 objRB.angularVelocity = Vector3.zero;
             }
-            Debug.Log("my pos x " + posX);
             objGPG.JumpForward();
         }
         else
@@ -245,10 +243,9 @@ public class SpawnObstacles : MonoBehaviour
                 obj.transform.position = new Vector3(posX, 2, StartPosZ);
                 objRB.isKinematic = true;
             }
-            Debug.Log("No jump :(, my pos " + posX);
         }
         
-        tempObj.Add(obj);
+        tempObj.Add((obj, sharkPool));
     }
 
 
@@ -266,16 +263,12 @@ public class SpawnObstacles : MonoBehaviour
     }
     public void Check()
     {
-        for (int i = 0; i < tempObj.Count; i++)
+        for (int i = tempObj.Count - 1; i >= 0; i--)
         {
-            if (tempObj[i].transform.position.z <= EndPosZ)
+            var (obj, pool) = tempObj[i];
+            if (obj.transform.position.z <= EndPosZ)
             {
-
-                swPool.Release(tempObj[i]);
-                dwPool.Release(tempObj[i]);
-                gwPool.Release(tempObj[i]);
-                sharkPool.Release(tempObj[i]);
-
+                pool.Release(obj);
                 tempObj.RemoveAt(i);
             }
         }

@@ -12,6 +12,7 @@ public class UIManager : MonoBehaviour
     public GameObject SettingsUI;
     public GameObject InputGuideUI;
     private ScoreCounter ScoreCt;
+    private int shownScore = -1;
 
     
 
@@ -37,9 +38,11 @@ public class UIManager : MonoBehaviour
     }
     private void Update()
     {
-        if (ScoreCt != null && ScoreTXT != null)
+        // rebuilding TMP text every frame allocates and regenerates the mesh, so only touch it when the score changes
+        if (ScoreCt != null && ScoreTXT != null && ScoreCt.Score != shownScore)
         {
-            ScoreTXT.text = $"Score: {ScoreCt.Score}";
+            shownScore = ScoreCt.Score;
+            ScoreTXT.text = $"Score: {shownScore}";
         }
     }
 
@@ -52,6 +55,7 @@ public class UIManager : MonoBehaviour
 
     public void Replay()
     {
+        EventManager.ResetState();
         SceneManager.LoadScene(0);
     }
 
