@@ -289,122 +289,230 @@ public static class SurferSetup
         return controller;
     }
 
-    // looping ride: knees breathe, arms sway, the whole thing banks toward the move direction
+    // looping ride: knees pump, the upper body sways between the feet, the arms balance with their own rhythm,
+    // and the whole thing banks toward the move direction
     private static AnimationClip MakeRide(string name, Transform visualRoot, Rig rig, float lean, float roll, float yaw)
     {
-        const float T = 1.2f;
+        const float T = 1.6f;
         var wrapper = new Dictionary<(string, string), (float t, float v)[]>
         {
-            [(Pivot, PosY)] = new[] { (0f, BoardBottomY + 0.012f), (T * 0.5f, BoardBottomY - 0.012f), (T, BoardBottomY + 0.012f) },
-            [(Pivot, RotZ)] = new[] { (0f, roll + 0.8f), (T * 0.5f, roll - 0.8f), (T, roll + 0.8f) },
+            [(Pivot, PosY)] = new[] { (0f, BoardBottomY + 0.015f), (T * 0.5f, BoardBottomY - 0.015f), (T, BoardBottomY + 0.015f) },
+            [(Pivot, RotZ)] = new[] { (0f, roll + 1.2f), (T * 0.5f, roll - 1.2f), (T, roll + 1.2f) },
             [(Pivot, RotY)] = new[] { (0f, yaw), (T, yaw) },
-            [(Board, RotX)] = new[] { (0f, 1.2f), (T * 0.5f, -1.2f), (T, 1.2f) },
+            [(Board, RotX)] = new[] { (0f, 1.5f), (T * 0.5f, -1.5f), (T, 1.5f) },
         };
         Func<float, Dictionary<string, Vector3>> pose = t =>
         {
-            float phase = Mathf.Cos(t / T * Mathf.PI * 2f);
-            return Stance(0.45f + 0.07f * phase, lean, 28f + 3f * phase, 0f);
+            float w = t / T * Mathf.PI * 2f;
+            Pose p = RidePose();
+            p.Crouch += 0.05f * Mathf.Cos(w);
+            p.Pitch += 3f * Mathf.Cos(w + 0.4f);
+            p.Bias = 0.6f * Mathf.Sin(w);
+            p.FrontDrop += 6f * Mathf.Sin(w + 1f);
+            p.BackDrop += 7f * Mathf.Sin(w + 2f);
+            p.HeadPitch += 2f * Mathf.Sin(w + 0.7f);
+
+            if (lean > 0f)
+            {
+                // weight on the toes (toward the chest): fold forward, front arm reaches, back arm lifts
+                p.Pitch += 12f * lean;
+                p.Crouch += 0.08f * lean;
+                p.FrontFwd += 15f * lean;
+                p.BackDrop -= 12f * lean;
+            }
+            else if (lean < 0f)
+            {
+                // weight on the heels: sit back and throw both arms forward to stay balanced
+                p.Pitch += 10f * lean;
+                p.Crouch -= 0.12f * lean;
+                p.FrontFwd -= 25f * lean;
+                p.BackFwd -= 35f * lean;
+                p.FrontDrop += 8f * lean;
+            }
+            return Stance(p);
         };
-        return MakeClip(name, T, true, visualRoot, rig, wrapper, pose, 24);
+        return MakeClip(name, T, true, visualRoot, rig, wrapper, pose, 33);
     }
 
-    // The three jump tricks are one second long each (crouch, pop, trick in the air, crouch to land).
+    // The three jump tricks are one second long each and share the same beats:
+    //   0.00 ride -> 0.12 load (deep crouch, arms back) -> 0.26 pop (stand tall, arms up)
+    //   -> air (trick specific) -> 0.86 catch -> 0.94 land (absorb) -> 1.00 settle.
     // PlayerAnimator stretches them to the real flight time through the JumpSpeed parameter.
     // A spin that ends on a full turn jumps back to 0 right after the last key: 360 and 0 look the same,
     // and it keeps the blend back into the ride clip from unwinding the whole turn.
 
-    // 360 shove-it: the board spins flat under the feet while the surfer stays put
+    // 360 shove-it: the board spins flat under the feet, the surfer tucks and watches it go round
     private static AnimationClip MakeShoveIt(Transform visualRoot, Rig rig)
     {
         var wrapper = new Dictionary<(string, string), (float t, float v)[]>
         {
-            [(Pivot, PosY)] = new[] { (0f, BoardBottomY), (0.12f, BoardBottomY - 0.03f), (0.28f, BoardBottomY), (1f, BoardBottomY) },
-            [(Pivot, RotX)] = new[] { (0f, 0f), (0.12f, 3f), (0.28f, -8f), (0.55f, -3f), (0.85f, 6f), (1f, 0f) },
-            [(Board, RotY)] = new[] { (0f, 0f), (0.2f, 0f), (0.85f, 360f), (0.8501f, 0f), (1f, 0f) },
-            [(Board, PosY)] = new[] { (0f, 0f), (0.28f, 0f), (0.5f, 0.1f), (0.75f, 0.07f), (0.92f, 0f), (1f, 0f) },
-            [(Surfer, PosY)] = new[] { (0f, 0f), (0.28f, 0f), (0.5f, 0.1f), (0.75f, 0.07f), (0.92f, 0f), (1f, 0f) },
+            [(Pivot, PosY)] = new[] { (0f, BoardBottomY), (0.12f, BoardBottomY - 0.04f), (0.26f, BoardBottomY), (0.94f, BoardBottomY - 0.04f), (1f, BoardBottomY) },
+            [(Pivot, RotX)] = new[] { (0f, 0f), (0.12f, 3f), (0.26f, -8f), (0.5f, -3f), (0.86f, 5f), (1f, 0f) },
+            [(Board, RotY)] = new[] { (0f, 0f), (0.28f, 0f), (0.82f, 360f), (0.8201f, 0f), (1f, 0f) },
+            [(Board, PosY)] = new[] { (0f, 0f), (0.26f, 0f), (0.45f, 0.22f), (0.7f, 0.2f), (0.88f, 0f), (1f, 0f) },
+            [(Surfer, PosY)] = new[] { (0f, 0f), (0.26f, 0.05f), (0.45f, 0.3f), (0.7f, 0.28f), (0.88f, 0f), (1f, 0f) },
         };
-        AnimationCurve crouch = Smooth((0f, 0.45f), (0.12f, 0.95f), (0.28f, 0.05f), (0.55f, 0.55f), (0.85f, 0.55f), (0.95f, 0.95f), (1f, 0.6f));
-        AnimationCurve arms = Smooth((0f, 28f), (0.12f, 40f), (0.28f, -35f), (0.55f, -5f), (0.85f, 10f), (0.95f, 40f), (1f, 32f));
-        AnimationCurve pitch = Smooth((0f, 0f), (0.12f, 18f), (0.28f, -12f), (0.55f, 10f), (0.85f, 10f), (0.95f, 20f), (1f, 6f));
-        return MakeTrick("Trick_ShoveIt", visualRoot, rig, wrapper, crouch, arms, pitch);
+        Pose air = RidePose();
+        air.Crouch = 0.8f; air.Pitch = 24f; air.HeadPitch = 28f;
+        air.FrontDrop = 8f; air.FrontFwd = 35f; air.BackDrop = 15f; air.BackFwd = 35f; air.Elbow = 20f;
+        Pose air2 = air; air2.FrontDrop = 15f; air2.BackDrop = 25f; air2.Pitch = 20f;
+        return MakeClip("Trick_ShoveIt", 1f, false, visualRoot, rig, wrapper, TrickTimeline(air, air2), 31);
     }
 
-    // kickflip: the board is flicked and rolls once around its long axis, the surfer tucks his knees and catches it
+    // kickflip: the board rolls once around its long axis, the surfer pulls his knees right up and spreads the arms
     private static AnimationClip MakeKickflip(Transform visualRoot, Rig rig)
     {
         var wrapper = new Dictionary<(string, string), (float t, float v)[]>
         {
-            [(Pivot, PosY)] = new[] { (0f, BoardBottomY), (0.12f, BoardBottomY - 0.03f), (0.28f, BoardBottomY), (1f, BoardBottomY) },
-            [(Pivot, RotX)] = new[] { (0f, 0f), (0.12f, 3f), (0.28f, -6f), (0.55f, -2f), (0.85f, 5f), (1f, 0f) },
-            [(Board, RotZ)] = new[] { (0f, 0f), (0.25f, 0f), (0.8f, 360f), (0.8001f, 0f), (1f, 0f) },
-            [(Board, RotX)] = new[] { (0f, 0f), (0.25f, 0f), (0.35f, -8f), (0.8f, 4f), (1f, 0f) },
-            [(Board, PosY)] = new[] { (0f, 0f), (0.25f, 0f), (0.5f, 0.2f), (0.75f, 0.12f), (0.9f, 0f), (1f, 0f) },
-            [(Surfer, PosY)] = new[] { (0f, 0f), (0.25f, 0f), (0.5f, 0.16f), (0.75f, 0.1f), (0.9f, 0f), (1f, 0f) },
+            [(Pivot, PosY)] = new[] { (0f, BoardBottomY), (0.12f, BoardBottomY - 0.04f), (0.26f, BoardBottomY), (0.94f, BoardBottomY - 0.04f), (1f, BoardBottomY) },
+            [(Pivot, RotX)] = new[] { (0f, 0f), (0.12f, 3f), (0.26f, -7f), (0.5f, -2f), (0.86f, 4f), (1f, 0f) },
+            [(Board, RotZ)] = new[] { (0f, 0f), (0.3f, 0f), (0.78f, 360f), (0.7801f, 0f), (1f, 0f) },
+            [(Board, RotX)] = new[] { (0f, 0f), (0.26f, 0f), (0.34f, -10f), (0.78f, 4f), (1f, 0f) },
+            [(Board, PosY)] = new[] { (0f, 0f), (0.26f, 0f), (0.45f, 0.35f), (0.7f, 0.3f), (0.88f, 0f), (1f, 0f) },
+            [(Surfer, PosY)] = new[] { (0f, 0f), (0.26f, 0.05f), (0.45f, 0.42f), (0.7f, 0.38f), (0.88f, 0f), (1f, 0f) },
         };
-        AnimationCurve crouch = Smooth((0f, 0.45f), (0.12f, 0.9f), (0.28f, 0.1f), (0.5f, 0.75f), (0.8f, 0.7f), (0.95f, 0.95f), (1f, 0.6f));
-        AnimationCurve arms = Smooth((0f, 28f), (0.12f, 38f), (0.28f, -20f), (0.5f, 0f), (0.8f, 5f), (0.95f, 40f), (1f, 32f));
-        AnimationCurve pitch = Smooth((0f, 0f), (0.12f, 16f), (0.28f, -8f), (0.5f, 14f), (0.8f, 12f), (0.95f, 20f), (1f, 6f));
-        return MakeTrick("Trick_Kickflip", visualRoot, rig, wrapper, crouch, arms, pitch);
+        Pose air = RidePose();
+        air.Crouch = 1f; air.Pitch = 30f; air.HeadPitch = 32f; air.Spread = 24f;
+        air.FrontDrop = -8f; air.FrontFwd = 0f; air.BackDrop = -2f; air.BackFwd = -15f; air.Elbow = 10f;
+        Pose air2 = air; air2.Crouch = 0.9f; air2.FrontDrop = 5f; air2.BackDrop = 10f;
+        return MakeClip("Trick_Kickflip", 1f, false, visualRoot, rig, wrapper, TrickTimeline(air, air2), 31);
     }
 
-    // 360 spin: surfer and board turn once together in the air with the arms wide, like a skate 360
+    // 360 spin: surfer and board turn once together, arms wrapped to the chest to spin, then thrown open to land
     private static AnimationClip MakeSpin360(Transform visualRoot, Rig rig)
     {
         var wrapper = new Dictionary<(string, string), (float t, float v)[]>
         {
-            [(Pivot, PosY)] = new[] { (0f, BoardBottomY), (0.12f, BoardBottomY - 0.03f), (0.28f, BoardBottomY), (1f, BoardBottomY) },
-            [(Pivot, RotY)] = new[] { (0f, 0f), (0.2f, 0f), (0.85f, 360f), (0.8501f, 0f), (1f, 0f) },
-            [(Pivot, RotX)] = new[] { (0f, 0f), (0.12f, 3f), (0.3f, -5f), (0.85f, 3f), (1f, 0f) },
-            [(Board, PosY)] = new[] { (0f, 0f), (0.28f, 0f), (0.5f, 0.08f), (0.75f, 0.06f), (0.92f, 0f), (1f, 0f) },
-            [(Surfer, PosY)] = new[] { (0f, 0f), (0.28f, 0f), (0.5f, 0.08f), (0.75f, 0.06f), (0.92f, 0f), (1f, 0f) },
+            [(Pivot, PosY)] = new[] { (0f, BoardBottomY), (0.12f, BoardBottomY - 0.04f), (0.26f, BoardBottomY), (0.94f, BoardBottomY - 0.04f), (1f, BoardBottomY) },
+            [(Pivot, RotY)] = new[] { (0f, 0f), (0.24f, 0f), (0.84f, 360f), (0.8401f, 0f), (1f, 0f) },
+            [(Pivot, RotX)] = new[] { (0f, 0f), (0.12f, 3f), (0.26f, -5f), (0.86f, 3f), (1f, 0f) },
+            [(Board, PosY)] = new[] { (0f, 0f), (0.26f, 0f), (0.45f, 0.12f), (0.7f, 0.1f), (0.88f, 0f), (1f, 0f) },
+            [(Surfer, PosY)] = new[] { (0f, 0f), (0.26f, 0.04f), (0.45f, 0.16f), (0.7f, 0.14f), (0.88f, 0f), (1f, 0f) },
         };
-        AnimationCurve crouch = Smooth((0f, 0.45f), (0.12f, 0.95f), (0.28f, 0.05f), (0.5f, 0.35f), (0.85f, 0.35f), (0.95f, 0.95f), (1f, 0.6f));
-        AnimationCurve arms = Smooth((0f, 28f), (0.12f, 40f), (0.28f, -10f), (0.5f, -8f), (0.85f, 0f), (0.95f, 40f), (1f, 32f));
-        AnimationCurve pitch = Smooth((0f, 0f), (0.12f, 18f), (0.28f, -6f), (0.5f, 4f), (0.85f, 4f), (0.95f, 20f), (1f, 6f));
-        return MakeTrick("Trick_Spin360", visualRoot, rig, wrapper, crouch, arms, pitch);
+        Pose air = RidePose();
+        air.Crouch = 0.5f; air.Pitch = 8f; air.HeadPitch = -5f; air.Twist = -35f;
+        air.FrontDrop = 70f; air.FrontFwd = 75f; air.BackDrop = 70f; air.BackFwd = 75f; air.Elbow = 75f;
+        Pose open = RidePose();
+        open.Crouch = 0.55f; open.Pitch = 10f; open.FrontDrop = -5f; open.BackDrop = 0f; open.Elbow = 10f;
+        return MakeClip("Trick_Spin360", 1f, false, visualRoot, rig, wrapper, TrickTimeline(air, open), 31);
     }
 
-    private static AnimationClip MakeTrick(string name, Transform visualRoot, Rig rig,
-        Dictionary<(string, string), (float t, float v)[]> wrapper,
-        AnimationCurve crouch, AnimationCurve arms, AnimationCurve pitch)
+    private static Func<float, Dictionary<string, Vector3>> TrickTimeline(Pose air, Pose air2)
     {
-        Func<float, Dictionary<string, Vector3>> pose = t => Stance(crouch.Evaluate(t), 0f, arms.Evaluate(t), pitch.Evaluate(t));
-        return MakeClip(name, 1f, false, visualRoot, rig, wrapper, pose, 25);
+        Pose ride = RidePose();
+
+        Pose load = ride;
+        load.Crouch = 0.95f; load.Pitch = 34f; load.HeadPitch = 6f;
+        load.FrontDrop = 60f; load.FrontFwd = 0f; load.BackDrop = 72f; load.BackFwd = -30f; load.Elbow = 15f;
+
+        Pose pop = ride;
+        pop.Crouch = 0.05f; pop.Pitch = 0f; pop.HeadPitch = -12f;
+        pop.FrontDrop = -40f; pop.FrontFwd = 25f; pop.BackDrop = -25f; pop.BackFwd = 20f; pop.Elbow = 10f;
+
+        Pose catchPose = ride;
+        catchPose.Crouch = 0.4f; catchPose.Pitch = 14f; catchPose.HeadPitch = 15f;
+        catchPose.FrontDrop = 10f; catchPose.BackDrop = 30f;
+
+        Pose land = ride;
+        land.Crouch = 1f; land.Pitch = 30f; land.HeadPitch = 0f;
+        land.FrontDrop = 45f; land.FrontFwd = 25f; land.BackDrop = 65f; land.Elbow = 40f;
+
+        Pose settle = ride;
+        settle.Crouch = 0.75f; settle.Pitch = 22f;
+
+        return Timeline((0f, ride), (0.12f, load), (0.26f, pop), (0.42f, air), (0.7f, air2),
+            (0.86f, catchPose), (0.94f, land), (1f, settle));
     }
 
-    // Surf stance, all angles are absolute (relative to the T-pose) in the character's own frame:
-    // X = his right, Y = up, Z = the way his chest points. Left foot leads, head looks along the board.
-    //   crouch    0..1   how far the knees are bent
-    //   lean     -1..1   body weight back / forward
-    //   armDrop   deg    how far the arms hang down from the T-pose
-    //   extraPitch deg   extra forward bend of the spine
-    private static Dictionary<string, Vector3> Stance(float crouch, float lean, float armDrop, float extraPitch)
+    // eases from one key pose to the next
+    private static Func<float, Dictionary<string, Vector3>> Timeline(params (float t, Pose p)[] keys)
     {
-        float hip = Mathf.Lerp(0f, 38f, crouch);   // thigh swings forward
-        float shin = hip * 1.15f;                  // shin swings back so the ankle stays under the hip
-        float spread = 13f;                        // legs apart along the board
-        float bend = 8f * crouch + 6f * lean;
+        return t =>
+        {
+            int i = 0;
+            while (i < keys.Length - 2 && t > keys[i + 1].t) i++;
+            float s = Mathf.InverseLerp(keys[i].t, keys[i + 1].t, t);
+            return Stance(Pose.Mix(keys[i].p, keys[i + 1].p, Mathf.SmoothStep(0f, 1f, s)));
+        };
+    }
+
+    // Knobs for the surf stance, angles in degrees
+    private struct Pose
+    {
+        public float Crouch;      // 0..1 knee bend
+        public float Bias;        // -1..1 upper body over the back foot (-) or the front foot (+)
+        public float Pitch;       // forward bend of the upper body
+        public float Twist;       // chest turned toward the nose (more negative = more toward the nose)
+        public float FrontDrop;   // front (left) arm: degrees below the T-pose, negative raises it
+        public float FrontFwd;    // front arm: swung in front of the chest
+        public float BackDrop;    // back (right) arm
+        public float BackFwd;
+        public float Elbow;       // elbow bend
+        public float HeadPitch;   // positive looks down
+        public float Spread;      // legs apart along the board
+
+        public static Pose Mix(Pose a, Pose b, float s)
+        {
+            return new Pose
+            {
+                Crouch = Mathf.Lerp(a.Crouch, b.Crouch, s),
+                Bias = Mathf.Lerp(a.Bias, b.Bias, s),
+                Pitch = Mathf.Lerp(a.Pitch, b.Pitch, s),
+                Twist = Mathf.Lerp(a.Twist, b.Twist, s),
+                FrontDrop = Mathf.Lerp(a.FrontDrop, b.FrontDrop, s),
+                FrontFwd = Mathf.Lerp(a.FrontFwd, b.FrontFwd, s),
+                BackDrop = Mathf.Lerp(a.BackDrop, b.BackDrop, s),
+                BackFwd = Mathf.Lerp(a.BackFwd, b.BackFwd, s),
+                Elbow = Mathf.Lerp(a.Elbow, b.Elbow, s),
+                HeadPitch = Mathf.Lerp(a.HeadPitch, b.HeadPitch, s),
+                Spread = Mathf.Lerp(a.Spread, b.Spread, s),
+            };
+        }
+    }
+
+    // a relaxed surf stance: knees well bent, chest half turned to the nose, front arm leading, back arm low
+    private static Pose RidePose()
+    {
+        return new Pose
+        {
+            Crouch = 0.62f, Pitch = 18f, Twist = -20f,
+            FrontDrop = 28f, FrontFwd = 18f, BackDrop = 58f, BackFwd = -5f, Elbow = 25f,
+            HeadPitch = -6f, Spread = 16f,
+        };
+    }
+
+    // All angles are absolute (relative to the T-pose) in the character's own frame:
+    // X = his right (the board tail), Y = up, Z = the way his chest points. Left foot leads, head looks at the nose.
+    private static Dictionary<string, Vector3> Stance(Pose p)
+    {
+        float crouch = Mathf.Clamp01(p.Crouch);
+        float hip = Mathf.Lerp(0f, 58f, crouch);   // thigh swings forward
+        float shin = hip * 1.1f;                   // shin swings back so the ankle stays under the hip
+        float roll = 8f * p.Bias;                  // upper body leans over the front or the back foot
+
+        // the hips face the nose a bit, the chest less so (Twist), the head looks straight down the board
+        const float hipsYaw = -25f;
+        const float headYaw = -80f;
 
         return new Dictionary<string, Vector3>
         {
-            ["Hips"] = new Vector3(0.5f * bend, -25f, 0f),
-            ["Spine"] = new Vector3(bend + 0.4f * extraPitch, -12f, 0f),
-            ["Spine1"] = new Vector3(bend + 0.35f * extraPitch + 2f, -8f, 0f),
-            ["Spine2"] = new Vector3(bend + 0.25f * extraPitch + 2f, -4f, 0f),
-            ["Neck"] = new Vector3(-6f * crouch, -35f, 0f),
-            ["Head"] = new Vector3(-8f * crouch, -70f, 0f),
+            ["Hips"] = new Vector3(p.Pitch * 0.25f, hipsYaw, roll * 0.3f),
+            ["Spine"] = new Vector3(p.Pitch * 0.45f, Mathf.Lerp(hipsYaw, p.Twist, 0.33f), roll * 0.6f),
+            ["Spine1"] = new Vector3(p.Pitch * 0.75f, Mathf.Lerp(hipsYaw, p.Twist, 0.66f), roll * 0.85f),
+            ["Spine2"] = new Vector3(p.Pitch, p.Twist, roll),
+            ["Neck"] = new Vector3(Mathf.Lerp(p.Pitch, p.HeadPitch, 0.5f), Mathf.Lerp(p.Twist, headYaw, 0.5f), roll * 0.5f),
+            ["Head"] = new Vector3(p.HeadPitch, headYaw, 0f),
 
-            ["LeftArm"] = new Vector3(0f, 0f, armDrop),
-            ["LeftForeArm"] = new Vector3(0f, 12f, armDrop * 0.5f),
-            ["RightArm"] = new Vector3(0f, 0f, -armDrop),
-            ["RightForeArm"] = new Vector3(0f, -12f, -armDrop * 0.5f),
+            ["LeftArm"] = new Vector3(0f, p.FrontFwd, p.FrontDrop),
+            ["LeftForeArm"] = new Vector3(0f, p.FrontFwd + p.Elbow, p.FrontDrop - p.Elbow * 0.2f),
+            ["RightArm"] = new Vector3(0f, -p.BackFwd, -p.BackDrop),
+            ["RightForeArm"] = new Vector3(0f, -(p.BackFwd + p.Elbow), -(p.BackDrop - p.Elbow * 0.2f)),
 
-            ["LeftUpLeg"] = new Vector3(-hip, 0f, -spread),
-            ["LeftLeg"] = new Vector3(shin, 0f, -spread * 0.4f),
+            ["LeftUpLeg"] = new Vector3(-hip, 0f, -p.Spread),
+            ["LeftLeg"] = new Vector3(shin, 0f, -p.Spread * 0.3f),
             ["LeftFoot"] = Vector3.zero,
-            ["RightUpLeg"] = new Vector3(-hip, 0f, spread),
-            ["RightLeg"] = new Vector3(shin, 0f, spread * 0.4f),
+            ["RightUpLeg"] = new Vector3(-hip, 0f, p.Spread),
+            ["RightLeg"] = new Vector3(shin, 0f, p.Spread * 0.3f),
             ["RightFoot"] = Vector3.zero,
         };
     }

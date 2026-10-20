@@ -30,8 +30,18 @@ public class FlowingWater : MonoBehaviour
     [SerializeField] private float endZ = 150f;
     [SerializeField] private float segmentLength = 2f;
 
-    private static readonly int FlowOffsetId = Shader.PropertyToID("_WaterFlowOffset");
+    [Header("Wake")]
+    [Tooltip("Board bottom relative to the Player transform (the capsule is 2 tall)")]
+    [SerializeField] private float boardOffsetY = -1f;
+    [Tooltip("How fast the wake fades in and out when the board leaves or touches the water")]
+    [SerializeField] private float wakeFadeSpeed = 6f;
 
+    private static readonly int FlowOffsetId = Shader.PropertyToID("_WaterFlowOffset");
+    private static readonly int PlayerPosId = Shader.PropertyToID("_WaterPlayerPos");
+
+    private Transform player;
+    private PlayerAnimator playerAnimator;
+    private float wake;
     private float flowOffset;
     private bool running;
     private bool dead;
@@ -68,6 +78,30 @@ public class FlowingWater : MonoBehaviour
 
         flowOffset += speed * Time.deltaTime;
         Shader.SetGlobalFloat(FlowOffsetId, flowOffset);
+        UpdateWake();
+    }
+
+    // tell the shader where the board is so it can draw the wake; the wake fades while the board is in the air
+    private void UpdateWake()
+    {
+        if (player == null)
+        {
+            GameObject go = GameObject.FindGameObjectWithTag("Player");
+            if (go == null)
+            {
+                Shader.SetGlobalVector(PlayerPosId, new Vector4(0f, -1000f, 0f, 0f));
+                return;
+            }
+            player = go.transform;
+            playerAnimator = go.GetComponent<PlayerAnimator>();
+        }
+
+        bool touching = player.gameObject.activeInHierarchy && (playerAnimator == null || !playerAnimator.IsAirborne);
+        float target = touching ? 1f : 0f;
+        wake = Application.isPlaying ? Mathf.MoveTowards(wake, target, wakeFadeSpeed * Time.deltaTime) : target;
+
+        Vector3 p = player.position + Vector3.up * boardOffsetY;
+        Shader.SetGlobalVector(PlayerPosId, new Vector4(p.x, p.y, p.z, wake));
     }
 
     private void OnGameHasStarted() => running = true;

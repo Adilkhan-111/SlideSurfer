@@ -25,15 +25,22 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _EdgeFoam: 0.1
-    - _Gloss: 80
-    - _RippleScale: 1.2
-    - _RippleStrength: 0.45
-    - _StreakAmount: 0.5
-    - _StreakScale: 0.15
-    - _WaveHeight: 0.03
+    - _CausticScale: 0.6
+    - _CausticStrength: 0.22
+    - _EdgeFoam: 0.07
+    - _Gloss: 160
+    - _RippleScale: 1.1
+    - _RippleStrength: 0.5
+    - _Sparkle: 1
+    - _StreakAmount: 0.35
+    - _StreakScale: 0.12
+    - _WakeAmount: 1
+    - _WakeLength: 9
+    - _WaveHeight: 0.05
     m_Colors:
-    - _DeepColor: {r: 0.03, g: 0.32999998, b: 0.58, a: 0.85}
+    - _DeepColor: {r: 0, g: 0.31999996, b: 0.54999995, a: 0.9}
     - _FoamColor: {r: 1, g: 1, b: 1, a: 1}
-    - _ShallowColor: {r: 0.19999996, g: 0.78, b: 0.88, a: 0.6}
+    - _ShallowColor: {r: 0.11999995, g: 0.82, b: 0.86, a: 0.7}
+    - _SkyColor: {r: 0.75, g: 0.93, b: 1, a: 1}
   m_BuildTextureStacks: []
+  m_AllowLocking: 1

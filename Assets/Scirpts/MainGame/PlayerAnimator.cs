@@ -35,6 +35,11 @@ public class PlayerAnimator : MonoBehaviour
     private int lastTrick = -1;
     private bool warned;
 
+    /// <summary>True while the board is off the water during a jump.</summary>
+    public bool IsAirborne => airborne;
+    public event System.Action Jumped;
+    public event System.Action Landed;
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
@@ -82,9 +87,9 @@ public class PlayerAnimator : MonoBehaviour
         if (!airborne)
         {
             // only an upward launch counts, so the drop at the start of a run doesn't play the trick
-            if (!grounded && rb.velocity.y > takeoffVelocity) StartJump();
+            if (!grounded && rb.linearVelocity.y > takeoffVelocity) StartJump();
         }
-        else if (grounded && rb.velocity.y <= 0.1f)
+        else if (grounded && rb.linearVelocity.y <= 0.1f)
         {
             EndJump();
         }
@@ -94,10 +99,11 @@ public class PlayerAnimator : MonoBehaviour
     {
         airborne = true;
         // stretch the 1 second jump clip over the real flight time (up and back down)
-        float airTime = 2f * rb.velocity.y / Mathf.Abs(Physics.gravity.y);
+        float airTime = 2f * rb.linearVelocity.y / Mathf.Abs(Physics.gravity.y);
         animator.SetFloat(JumpSpeedId, Mathf.Clamp(1f / Mathf.Max(airTime, 0.01f), 0.35f, 3f));
         animator.SetInteger(TrickId, PickTrick());
         animator.SetBool(AirborneId, true);
+        Jumped?.Invoke();
     }
 
     // random trick, but never the same one twice in a row
@@ -114,6 +120,7 @@ public class PlayerAnimator : MonoBehaviour
     {
         airborne = false;
         animator.SetBool(AirborneId, false);
+        Landed?.Invoke();
     }
 
     private bool IsGrounded()

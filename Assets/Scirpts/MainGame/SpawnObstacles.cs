@@ -231,7 +231,7 @@ public class SpawnObstacles : MonoBehaviour
             {
                 
                 objRB.isKinematic = false;
-                objRB.velocity = Vector3.zero;
+                objRB.linearVelocity = Vector3.zero;
                 objRB.angularVelocity = Vector3.zero;
             }
             objGPG.JumpForward();
