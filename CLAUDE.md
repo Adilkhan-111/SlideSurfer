@@ -64,6 +64,14 @@
   События: `EventManager`, `Coin.Removed`, `SharkMover.Appeared/Leaped`, `PlayerAnimator.Jumped/Landed`; клик из `UIManager`.
   Громкости `MusicVolume/SfxVolume` в PlayerPrefs (`volume_music`, `volume_sfx`) — для будущих настроек.
 
+## Меню
+- **Setup Menus** (`Assets/Editor/UISetup.cs`) строит на Canvas: окно настроек внутри `SettingsMenu` (`SettingsPanel`:
+  музыка/эффекты вкл-выкл + громкость, графика Low/Medium/High = уровни качества 0/1/2, во время забега — пауза
+  через `Time.timeScale = 0`), кнопку магазина `ShopButton` внизу справа (прячется на `GameHasStarted`) и окно
+  `MessagePopup` («Will be added soon!»). Спрайты (скруглённый прямоугольник, круг, сумка) рисуются кодом в `Assets/UI/Generated`.
+- `UIInputGuard` на Canvas: пока открыто окно или касание началось на UI, `MoveInput` не двигает игрока и не стартует забег.
+- Шрифт LiberationSans без кириллицы — тексты UI на английском.
+
 ## Темп (пейсинг)
 - Задаёт `SpawnObstacles` (на SpawnManager), время = секунды забега = очки. Кривые `SpeedOverTime` (11→17→25→33→40 на
   0/60/120/240/360 с) и `IntervalOverTime` (2.4→1.7→1.25→0.95→0.8 с) пишут `GameSettings.currentSpeed/currentSB`;

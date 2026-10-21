@@ -74,6 +74,27 @@ public class AudioManager : MonoBehaviour
         set { sfxVolume = Mathf.Clamp01(value); PlayerPrefs.SetFloat(SfxVolumeKey, sfxVolume); }
     }
 
+    // on/off switches, separate from the volume so turning sound back on restores the old level
+    private const string MusicOnKey = "music_on";
+    private const string SfxOnKey = "sfx_on";
+    private bool musicOn = true;
+    private bool sfxOn = true;
+
+    public bool MusicOn
+    {
+        get => musicOn;
+        set { musicOn = value; PlayerPrefs.SetInt(MusicOnKey, value ? 1 : 0); }
+    }
+
+    public bool SfxOn
+    {
+        get => sfxOn;
+        set { sfxOn = value; PlayerPrefs.SetInt(SfxOnKey, value ? 1 : 0); }
+    }
+
+    private float MusicLevel => musicOn ? musicVolume : 0f;
+    private float SfxLevel => sfxOn ? sfxVolume : 0f;
+
     private void Awake()
     {
         // one manager for the whole session: the copy in a reloaded scene steps aside
@@ -87,6 +108,8 @@ public class AudioManager : MonoBehaviour
 
         musicVolume = PlayerPrefs.GetFloat(MusicVolumeKey, musicVolume);
         sfxVolume = PlayerPrefs.GetFloat(SfxVolumeKey, sfxVolume);
+        musicOn = PlayerPrefs.GetInt(MusicOnKey, 1) == 1;
+        sfxOn = PlayerPrefs.GetInt(SfxOnKey, 1) == 1;
 
         var musicGo = new GameObject("Music");
         musicGo.transform.SetParent(transform, false);
@@ -192,7 +215,7 @@ public class AudioManager : MonoBehaviour
         lastCoinTime = Time.time;
         if (coin == null) return;
         coinSource.pitch = Mathf.Pow(2f, streak / 12f);
-        coinSource.PlayOneShot(coin, 0.55f * sfxVolume);
+        coinSource.PlayOneShot(coin, 0.55f * SfxLevel);
     }
 
     private void OnJumped() => Play(jump, 0.8f);
@@ -206,7 +229,7 @@ public class AudioManager : MonoBehaviour
     private void Play(AudioClip clip, float volume)
     {
         if (clip == null) return;
-        sfx.PlayOneShot(clip, volume * sfxVolume);
+        sfx.PlayOneShot(clip, volume * SfxLevel);
     }
 
     // ---------------------------------------------------------------- per frame
@@ -219,14 +242,14 @@ public class AudioManager : MonoBehaviour
         musicFilter.cutoffFrequency = Mathf.Lerp(musicFilter.cutoffFrequency, targetCutoff, k);
         if (!fading)
         {
-            float v = musicVolume * musicDuck;
+            float v = MusicLevel * musicDuck;
             musicSources[currentMusic].volume = Mathf.Lerp(musicSources[currentMusic].volume, v, k);
         }
 
         // rushing water: louder and higher as the slide speeds up, quiet before the run
         float speed = gameSettings != null ? gameSettings.currentSpeed : 10f;
         float s01 = Mathf.InverseLerp(10f, 40f, speed);
-        float waterTarget = (riding ? Mathf.Lerp(0.18f, 0.32f, s01) : 0.08f) * sfxVolume;
+        float waterTarget = (riding ? Mathf.Lerp(0.18f, 0.32f, s01) : 0.08f) * SfxLevel;
         waterSource.volume = Mathf.Lerp(waterSource.volume, waterTarget, k);
         waterSource.pitch = Mathf.Lerp(0.9f, 1.25f, s01);
     }
@@ -248,7 +271,7 @@ public class AudioManager : MonoBehaviour
         {
             AudioSource next = musicSources[1 - currentMusic];
             float t = Mathf.InverseLerp(loopEnd - crossfade, loopEnd, cur.time);
-            float v = musicVolume * musicDuck;
+            float v = MusicLevel * musicDuck;
             // equal-power fade keeps the loudness steady through the join
             cur.volume = v * Mathf.Cos(t * Mathf.PI * 0.5f);
             next.volume = v * Mathf.Sin(t * Mathf.PI * 0.5f);

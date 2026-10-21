@@ -56,6 +56,7 @@ public class UIManager : MonoBehaviour
     public void Replay()
     {
         if (AudioManager.Instance != null) AudioManager.Instance.PlayClick();
+        Time.timeScale = 1f;   // in case the run was paused from the settings
         EventManager.ResetState();
         SceneManager.LoadScene(0);
     }

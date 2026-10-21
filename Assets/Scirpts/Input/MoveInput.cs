@@ -29,7 +29,9 @@ public class MoveInput : MonoBehaviour
     private void Movement(InputAction.CallbackContext ctx)
     {
         if (!isGrounded) return;
-        
+        // touches on menus and buttons are not steering
+        if (UIInputGuard.Blocked) return;
+
         Vector2 input = ctx.ReadValue<Vector2>();
         Vector3 move = new Vector3(input.x, 0f, 0f) * speed * Time.deltaTime;
         Vector3 targetPosition = PlayerRb.position + move;
