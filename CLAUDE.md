@@ -12,7 +12,11 @@
   её стоит выключить или обработать паузу при сворачивании.
 - Коммиты пользователь делает сам через GitHub Desktop (ветка `develop`), не пушит. Самому не коммитить без просьбы.
 - Компиляцию без Unity можно проверить через dotnet: netstandard2.1-проект со ссылками на
-  `C:/Program Files/Unity/Hub/Editor/6000.6.6f1/Editor/Data/Managed/UnityEngine/*.dll` и `Library/ScriptAssemblies/*.dll`.
+  `C:/Program Files/Unity/Hub/Editor/6000.6.6f1/Editor/Data/Managed/UnityEngine/*.dll` и **копии** DLL из
+  `Library/ScriptAssemblies` (не сами файлы!), с `UseSharedCompilation=false`, `-nodeReuse:false` и потом
+  `dotnet build-server shutdown`. Иначе фоновые процессы dotnet держат `Library/ScriptAssemblies/*.dll`, Unity не может
+  их перезаписать, считает, что есть ошибки компиляции, и билд падает с «Build completed with a result of 'Unknown'».
+- Быстрая проверка билда без полной сборки: `PlayerBuildInterface.CompilePlayerScripts` для активной платформы (Android).
 
 ## Как смотреть результат
 - Снимки делаю рендером камеры в RenderTexture → PNG в scratchpad → `Read`. Перед снимком с `Camera.main` выключать `Canvas`
