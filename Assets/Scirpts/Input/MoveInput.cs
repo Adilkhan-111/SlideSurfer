@@ -9,9 +9,12 @@ public class MoveInput : MonoBehaviour
     [SerializeField] private bool isGrounded;
     
     private Rigidbody PlayerRb;
-    [SerializeField] private float speed = 5f;
+    [Tooltip("How far the surfer moves for a swipe across the whole screen width (at sensitivity 1)")]
+    [SerializeField] private float unitsPerScreenWidth = 18f;
     private const float minX = -3.2f;
     private const float maxX = 3.2f;
+    // finger movement collected between physics steps
+    private float pendingPixels;
 
     private void OnEnable()
     {
@@ -32,12 +35,23 @@ public class MoveInput : MonoBehaviour
         // touches on menus and buttons are not steering
         if (UIInputGuard.Blocked) return;
 
+        // a touch delta is already "pixels moved since last time": no Time.deltaTime here, or the surfer would
+        // move further on a slow phone. Several deltas can arrive per frame, so they are summed and applied in FixedUpdate.
         Vector2 input = ctx.ReadValue<Vector2>();
-        Vector3 move = new Vector3(input.x, 0f, 0f) * speed * Time.deltaTime;
-        Vector3 targetPosition = PlayerRb.position + move;
+        if (Mathf.Approximately(input.x, 0f)) return;
+        pendingPixels += input.x;
+        EventManager.OnGameHasStarted();
+    }
+
+    private void FixedUpdate()
+    {
+        if (pendingPixels == 0f) return;
+        // in fractions of the screen width, so it feels the same on every phone
+        float dx = pendingPixels / Mathf.Max(1, Screen.width) * unitsPerScreenWidth * ControlSettings.Sensitivity;
+        pendingPixels = 0f;
+        Vector3 targetPosition = PlayerRb.position + new Vector3(dx, 0f, 0f);
         targetPosition.x = Mathf.Clamp(targetPosition.x, minX, maxX);
         PlayerRb.MovePosition(targetPosition);
-        EventManager.OnGameHasStarted();
     }
     
     private void OnCollisionEnter(Collision collision)

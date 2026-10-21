@@ -89,6 +89,9 @@ public static class CoinSetup
         soCoin.FindProperty("model").objectReferenceValue = model;
         soCoin.ApplyModifiedPropertiesWithoutUndo();
 
+        // six little parts per coin -> one mesh (one batch per material)
+        MeshCombine.Combine(model, OutDir + "/CoinModel.asset", UnityEngine.Rendering.ShadowCastingMode.Off);
+
         GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
         Object.DestroyImmediate(root);
         return prefab;

@@ -64,7 +64,7 @@ Shader "SlideSurfer/Spray"
                 float a = 1.0 - smoothstep(1.0 - _Softness, 1.0, r);
                 half4 c = i.color;
                 c.a *= a;
-                c.rgb = MixFog(c.rgb, i.fogFactor);
+                c.rgb = clamp(MixFog(c.rgb, i.fogFactor), 0.0, 8.0);
                 return c;
             }
             ENDHLSL

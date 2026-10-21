@@ -14,7 +14,19 @@ public class UIManager : MonoBehaviour
     private ScoreCounter ScoreCt;
     private int shownScore = -1;
 
-    
+    [Header("Best score")]
+    [Tooltip("Small 'BEST 123' line under the score")]
+    public TextMeshProUGUI BestTXT;
+    [Tooltip("'NEW RECORD!' flash shown once when the best score is passed during a run")]
+    public GameObject NewRecordBanner;
+    [Tooltip("Score and best score on the defeat window")]
+    public TextMeshProUGUI ResultTXT;
+    [SerializeField] private float bannerTime = 2f;
+
+    private int bestAtStart;
+    private bool recordAnnounced;
+    private float bannerLeft;
+
 
     private void OnEnable()
     {
@@ -35,6 +47,9 @@ public class UIManager : MonoBehaviour
         {
             InputGuideUI.SetActive(false);
         }
+        bestAtStart = HighScore.Best;
+        if (BestTXT != null) BestTXT.text = $"BEST {bestAtStart}";
+        if (NewRecordBanner != null) NewRecordBanner.SetActive(false);
     }
     private void Update()
     {
@@ -43,12 +58,40 @@ public class UIManager : MonoBehaviour
         {
             shownScore = ScoreCt.Score;
             ScoreTXT.text = $"Score: {shownScore}";
+            OnScoreChanged(shownScore);
+        }
+
+        if (bannerLeft > 0f)
+        {
+            bannerLeft -= Time.unscaledDeltaTime;
+            if (bannerLeft <= 0f && NewRecordBanner != null) NewRecordBanner.SetActive(false);
+        }
+    }
+
+    // the best line follows the score once it is passed, and the first time that happens there is a little celebration
+    private void OnScoreChanged(int score)
+    {
+        if (score <= bestAtStart) return;
+        if (BestTXT != null) BestTXT.text = $"BEST {score}";
+        if (!recordAnnounced && bestAtStart > 0 && NewRecordBanner != null)
+        {
+            recordAnnounced = true;
+            NewRecordBanner.SetActive(true);
+            bannerLeft = bannerTime;
         }
     }
 
 
     private void OnPlayerDied()
     {
+        int score = ScoreCt != null ? ScoreCt.Score : 0;
+        bool newRecord = HighScore.Submit(score);
+        if (ResultTXT != null)
+        {
+            ResultTXT.text = newRecord && bestAtStart > 0
+                ? $"NEW RECORD!\n<size=80%>SCORE {score}</size>"
+                : $"SCORE {score}\n<size=80%>BEST {HighScore.Best}</size>";
+        }
         if (defeatImage != null)
             defeatImage.gameObject.SetActive(true);
     }

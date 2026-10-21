@@ -140,6 +140,9 @@ public static class SharkSetup
             var pos = new Vector3(Mathf.Sin(a) * 0.16f, -0.17f, mouthZ + Mathf.Cos(a) * 0.13f);
             Prim(model, PrimitiveType.Cube, teeth, pos, new Vector3(0f, a * Mathf.Rad2Deg, 45f), new Vector3(0.04f, 0.04f, 0.015f));
         }
+        // dozens of parts -> one mesh for the body (the tail keeps its own, it moves)
+        MeshCombine.Combine(model, OutDir + "/SharkModel.asset", UnityEngine.Rendering.ShadowCastingMode.On, tail);
+        MeshCombine.Combine(tail, OutDir + "/SharkTail.asset", UnityEngine.Rendering.ShadowCastingMode.On);
         return model;
     }
 

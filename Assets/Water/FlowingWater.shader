@@ -49,6 +49,8 @@ Shader "SlideSurfer/FlowingWater"
             #pragma vertex vert
             #pragma fragment frag
             #pragma multi_compile_fog
+            // cheaper variant for the lowest quality level (set by GraphicsQuality.cs)
+            #pragma multi_compile _ _WATER_LITE
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -94,18 +96,32 @@ Shader "SlideSurfer/FlowingWater"
 
             // ---------------------------------------------------------------- noise
 
-            float Hash21(float2 p)
+            // Integer hash (pcg2d) of a whole-number cell coordinate. The old frac(p * 123.34) hash was so sensitive
+            // to rounding that phone compilers, which reorder float maths, gave the shared corner of two neighbouring
+            // cells two different values - the water broke into hard-edged rectangles. Integer maths is exact everywhere.
+            uint2 Pcg2d(float2 cell)
             {
-                p = frac(p * float2(123.34, 456.21));
-                p += dot(p, p + 45.32);
-                return frac(p.x * p.y);
+                // round, not truncate: a cell of 3.9999 must still be cell 4
+                uint2 v = uint2(int2(floor(cell + 0.5)));
+                v = v * 1664525u + 1013904223u;
+                v.x += v.y * 1664525u;
+                v.y += v.x * 1664525u;
+                v = v ^ (v >> 16u);
+                v.x += v.y * 1664525u;
+                v.y += v.x * 1664525u;
+                v = v ^ (v >> 16u);
+                return v;
             }
 
-            float2 Hash22(float2 p)
+            // 0..1 from the top 24 bits, which a float holds exactly
+            float Hash21(float2 cell)
             {
-                float3 a = frac(p.xyx * float3(123.34, 234.34, 345.65));
-                a += dot(a, a + 34.45);
-                return frac(float2(a.x * a.y, a.y * a.z));
+                return float(Pcg2d(cell).x >> 8u) * (1.0 / 16777216.0);
+            }
+
+            float2 Hash22(float2 cell)
+            {
+                return float2(Pcg2d(cell) >> 8u) * (1.0 / 16777216.0);
             }
 
             float ValueNoise(float2 p)
@@ -120,17 +136,11 @@ Shader "SlideSurfer/FlowingWater"
                 return lerp(lerp(a, b, u.x), lerp(c, d, u.x), u.y);
             }
 
+            // two octaves (three cost too much per pixel on phones); rescaled to keep the old three-octave range
             float Fbm(float2 p)
             {
-                float v = 0.0;
-                float a = 0.5;
-                for (int k = 0; k < 3; k++)
-                {
-                    v += a * ValueNoise(p);
-                    p = p * 2.03 + 17.1;
-                    a *= 0.5;
-                }
-                return v;
+                float v = 0.5 * ValueNoise(p) + 0.25 * ValueNoise(p * 2.03 + 17.1);
+                return v * 1.1667;
             }
 
             // distance to the nearest cell border of a wobbling voronoi: thin bright lines = caustics
@@ -228,17 +238,23 @@ Shader "SlideSurfer/FlowingWater"
                 float n1 = Fbm(rp);
                 float n2 = Fbm(rp * 2.3 + float2(0.0, _Time.y * 0.6));
 
-                // bend the normal with the ripple slope for the highlights
-                float e = 0.12;
-                float dx = Fbm(rp + float2(e, 0)) - n1;
-                float dz = Fbm(rp + float2(0, e)) - n1;
                 float3 n = normalize(i.normalWS * (frontFace ? 1.0 : -1.0));
-                float3 normalWS = normalize(n - float3(dx, 0.0, dz) * (_RippleStrength * 9.0));
-
-                // deeper colour in the middle of the pipe, lighter and greener where it climbs the walls
                 float across = min(i.uv.x, 1.0 - i.uv.x) * 2.0;
                 half4 col = lerp(_ShallowColor, _DeepColor, smoothstep(0.05, 0.85, across));
                 col.rgb *= 0.88 + 0.24 * n1;
+
+            #if defined(_WATER_LITE)
+                // lite: slope straight from the two noises already sampled, no caustics, glints or streaks
+                float3 normalWS = normalize(n - float3(n1 - 0.44, 0.0, n2 - 0.44) * (_RippleStrength * 0.8));
+                float foam = 0.0;
+            #else
+                // bend the normal with the slope of one cheap noise layer (three samples instead of two full fbm's)
+                float2 sp = rp * 1.7;
+                float e = 0.12;
+                float s0 = ValueNoise(sp);
+                float dx = ValueNoise(sp + float2(e, 0)) - s0;
+                float dz = ValueNoise(sp + float2(0, e)) - s0;
+                float3 normalWS = normalize(n - float3(dx, 0.0, dz) * (_RippleStrength * 5.0));
 
                 // dancing caustic net, soft and broken up by the ripples, strongest in the shallow parts
                 float2 cp = f * _CausticScale * float2(1.0, 0.55) + float2(n1, n2) * 1.2;
@@ -246,9 +262,12 @@ Shader "SlideSurfer/FlowingWater"
                 caustic = pow(1.0 - smoothstep(0.0, 0.09, caustic), 3.0) * smoothstep(0.35, 0.65, n2);
                 col.rgb += caustic * _CausticStrength * (0.5 + 0.5 * (1.0 - across));
 
-                // foam: thin streaks running with the current, lace along both walls, and the board's wake
-                float streak = Fbm(float2(f.x * 3.0, f.y * _StreakScale));
+                // thin foam streaks running with the current (one stretched noise layer is enough)
+                float streak = ValueNoise(float2(f.x * 3.0, f.y * _StreakScale)) * 0.875;
                 float foam = smoothstep(0.64, 0.74, streak + n2 * 0.12) * _StreakAmount;
+            #endif
+
+                // foam lace along both walls and the board's wake
                 float edgeDist = min(i.uv.x, 1.0 - i.uv.x);
                 float lace = smoothstep(_EdgeFoam, 0.0, edgeDist) * smoothstep(0.3, 0.6, n2 + 0.2);
                 lace = max(lace, smoothstep(_EdgeFoam * 0.35, 0.0, edgeDist));
@@ -260,10 +279,14 @@ Shader "SlideSurfer/FlowingWater"
                 float3 halfDir = normalize(mainLight.direction + viewDir);
                 float nh = saturate(dot(normalWS, halfDir));
                 float spec = pow(nh, _Gloss) * 2.0;
+            #if defined(_WATER_LITE)
+                float glint = 0.0;
+            #else
                 // tiny sun glints that pop on and off as the ripples move
                 float2 gc = f * 9.0;
                 float glintDot = 1.0 - smoothstep(0.05, 0.22, length(frac(gc) - 0.5));
                 float glint = step(0.97, Hash21(floor(gc) + floor(_Time.y * 5.0))) * glintDot * pow(nh, 8.0) * _Sparkle;
+            #endif
                 float fresnel = pow(1.0 - saturate(dot(normalWS, viewDir)), 4.0);
                 float diffuse = 0.65 + 0.35 * saturate(dot(normalWS, mainLight.direction));
 
@@ -275,7 +298,8 @@ Shader "SlideSurfer/FlowingWater"
                 half alpha = saturate(lerp(col.a, _FoamColor.a, foam) + fresnel * 0.3 + spec + glint);
 
                 rgb = MixFog(rgb, i.fogFactor);
-                return half4(rgb, alpha);
+                // keep the HDR value sane: in half precision a stray overflow becomes Inf/NaN and bloom spreads it
+                return half4(clamp(rgb, 0.0, 8.0), alpha);
             }
             ENDHLSL
         }

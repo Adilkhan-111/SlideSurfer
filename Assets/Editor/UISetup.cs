@@ -49,6 +49,7 @@ public static class UISetup
         BuildSettings(canvas.transform.Find("SettingsMenu").gameObject);
         MessagePopup popup = BuildPopup(canvas.transform);
         BuildShopButton(canvas.transform, popup);
+        BuildScoreUI(canvas.transform);
 
         // windows on top of everything else
         canvas.transform.Find("SettingsMenu").SetAsLastSibling();
@@ -72,22 +73,30 @@ public static class UISetup
         dim.color = new Color(0f, 0f, 0f, 0.6f);
         for (int i = rt.childCount - 1; i >= 0; i--) Object.DestroyImmediate(rt.GetChild(i).gameObject);
 
-        RectTransform card = Card(rt, "Card", new Vector2(880f, 1240f));
-        TMP_Text title = Text(card, "Title", "SETTINGS", 84, FontStyles.Bold, Ink, new Vector2(0f, 530f), new Vector2(760f, 120f));
+        RectTransform card = Card(rt, "Card", new Vector2(880f, 1440f));
+        TMP_Text title = Text(card, "Title", "SETTINGS", 84, FontStyles.Bold, Ink, new Vector2(0f, 620f), new Vector2(760f, 120f));
 
         Toggle musicToggle; Slider musicSlider;
-        AudioRow(card, "Music", 330f, out musicToggle, out musicSlider);
+        AudioRow(card, "Music", 440f, out musicToggle, out musicSlider);
         Toggle sfxToggle; Slider sfxSlider;
-        AudioRow(card, "Sound effects", 60f, out sfxToggle, out sfxSlider);
+        AudioRow(card, "Sound effects", 170f, out sfxToggle, out sfxSlider);
+
+        // steering sensitivity with its value on the right
+        Text(card, "SensitivityLabel", "Sensitivity", 60, FontStyles.Bold, Ink, new Vector2(-150f, -40f), new Vector2(460f, 90f), TextAlignmentOptions.Left);
+        TMP_Text sensitivityValue = Text(card, "SensitivityValue", "1.0x", 56, FontStyles.Bold, Accent, new Vector2(280f, -40f), new Vector2(200f, 90f), TextAlignmentOptions.Right);
+        Slider sensitivity = VolumeSlider(card, "SensitivitySlider", new Vector2(0f, -160f));
+        sensitivity.minValue = ControlSettings.Min;
+        sensitivity.maxValue = ControlSettings.Max;
+        sensitivity.value = 1f;
 
         // graphics quality: three segmented buttons
-        Text(card, "GraphicsLabel", "Graphics", 60, FontStyles.Bold, Ink, new Vector2(-150f, -170f), new Vector2(460f, 90f), TextAlignmentOptions.Left);
+        Text(card, "GraphicsLabel", "Graphics", 60, FontStyles.Bold, Ink, new Vector2(-150f, -300f), new Vector2(460f, 90f), TextAlignmentOptions.Left);
         string[] names = { "Low", "Medium", "High" };
         var quality = new Button[3];
         for (int i = 0; i < 3; i++)
-            quality[i] = ButtonWithText(card, "Quality" + names[i], names[i], new Vector2(-260f + i * 260f, -290f), new Vector2(240f, 110f), Soft, Ink, 48);
+            quality[i] = ButtonWithText(card, "Quality" + names[i], names[i], new Vector2(-260f + i * 260f, -420f), new Vector2(240f, 110f), Soft, Ink, 48);
 
-        Button close = ButtonWithText(card, "Close", "CLOSE", new Vector2(0f, -500f), new Vector2(600f, 140f), Accent, Color.white, 60);
+        Button close = ButtonWithText(card, "Close", "CLOSE", new Vector2(0f, -600f), new Vector2(600f, 140f), Accent, Color.white, 60);
 
         var panel = menu.GetComponent<SettingsPanel>();
         if (panel == null) panel = Undo.AddComponent<SettingsPanel>(menu);
@@ -97,6 +106,8 @@ public static class UISetup
         so.FindProperty("musicSlider").objectReferenceValue = musicSlider;
         so.FindProperty("sfxToggle").objectReferenceValue = sfxToggle;
         so.FindProperty("sfxSlider").objectReferenceValue = sfxSlider;
+        so.FindProperty("sensitivitySlider").objectReferenceValue = sensitivity;
+        so.FindProperty("sensitivityValue").objectReferenceValue = sensitivityValue;
         var qb = so.FindProperty("qualityButtons");
         qb.arraySize = 3;
         for (int i = 0; i < 3; i++) qb.GetArrayElementAtIndex(i).objectReferenceValue = quality[i];
@@ -258,6 +269,65 @@ public static class UISetup
 
         var so = new SerializedObject(go.GetComponent<ShopButton>());
         so.FindProperty("popup").objectReferenceValue = popup;
+        so.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    // ---------------------------------------------------------------- best score
+
+    // "BEST 123" under the score, a "NEW RECORD!" flash, and the result on the defeat window
+    private static void BuildScoreUI(Transform canvas)
+    {
+        foreach (string n in new[] { "BestScore", "NewRecordBanner" })
+        {
+            Transform old = canvas.Find(n);
+            if (old != null) Object.DestroyImmediate(old.gameObject);
+        }
+
+        var bestGo = new GameObject("BestScore", typeof(RectTransform), typeof(TextMeshProUGUI));
+        Undo.RegisterCreatedObjectUndo(bestGo, "Best score");
+        var brt = (RectTransform)bestGo.transform;
+        brt.SetParent(canvas, false);
+        brt.anchorMin = brt.anchorMax = new Vector2(0f, 1f);
+        brt.pivot = new Vector2(0f, 1f);
+        brt.anchoredPosition = new Vector2(44f, -245f);
+        brt.sizeDelta = new Vector2(600f, 80f);
+        var best = bestGo.GetComponent<TextMeshProUGUI>();
+        best.font = font;
+        best.text = "BEST 0";
+        best.fontSize = 60;
+        best.fontStyle = FontStyles.Bold;
+        best.color = new Color(1f, 0.9f, 0.45f);
+        best.alignment = TextAlignmentOptions.TopLeft;
+        best.raycastTarget = false;
+
+        var bannerGo = new GameObject("NewRecordBanner", typeof(RectTransform), typeof(Image), typeof(PopIn));
+        Undo.RegisterCreatedObjectUndo(bannerGo, "Record banner");
+        var nrt = (RectTransform)bannerGo.transform;
+        nrt.SetParent(canvas, false);
+        nrt.anchorMin = nrt.anchorMax = new Vector2(0.5f, 1f);
+        nrt.pivot = new Vector2(0.5f, 0.5f);
+        nrt.anchoredPosition = new Vector2(0f, -470f);
+        nrt.sizeDelta = new Vector2(820f, 170f);
+        var bannerImg = bannerGo.GetComponent<Image>();
+        bannerImg.sprite = rounded;
+        bannerImg.type = Image.Type.Sliced;
+        bannerImg.color = new Color(1f, 0.55f, 0.15f);
+        bannerImg.raycastTarget = false;
+        Text(nrt, "Label", "NEW RECORD!", 96, FontStyles.Bold, Color.white, Vector2.zero, nrt.sizeDelta);
+        bannerGo.SetActive(false);
+
+        // result on the defeat window, above the Replay button
+        Transform defeat = canvas.Find("DefeatWindow");
+        Transform oldResult = defeat.Find("Result");
+        if (oldResult != null) Object.DestroyImmediate(oldResult.gameObject);
+        TMP_Text result = Text((RectTransform)defeat, "Result", "SCORE 0\n<size=80%>BEST 0</size>", 84, FontStyles.Bold, Color.white,
+            new Vector2(0f, 60f), new Vector2(640f, 260f));
+
+        var ui = Object.FindAnyObjectByType<UIManager>();
+        var so = new SerializedObject(ui);
+        so.FindProperty("BestTXT").objectReferenceValue = best;
+        so.FindProperty("NewRecordBanner").objectReferenceValue = bannerGo;
+        so.FindProperty("ResultTXT").objectReferenceValue = result;
         so.ApplyModifiedPropertiesWithoutUndo();
     }
 

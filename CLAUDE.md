@@ -5,7 +5,9 @@
 (читать через `pdftotext -enc UTF-8`). Общение с пользователем на русском.
 
 ## Окружение
-- Unity **6000.6.6f1**, URP (качество по умолчанию — Balanced), новая Input System.
+- Unity **6000.6.6f1**, URP (качество по умолчанию — Balanced), новая Input System. Android: Vulkan, затем OpenGLES3.
+- Телефон пользователя (Samsung A34, SM-A346E, Android 16) бывает подключён по USB: adb лежит в
+  `.../Editor/Data/PlaybackEngines/AndroidPlayer/SDK/platform-tools/adb.exe`, лог — `adb logcat`, снимок — `adb exec-out screencap -p`.
 - Проект обычно открыт в редакторе, работаю через **Unity MCP** (`mcp__unity-mcp__*`): `Unity_RunCommand` выполняет C# в редакторе,
   `Unity_GetConsoleLogs` читает консоль. Batchmode не запустится, пока редактор открыт.
 - В Player Settings включён **Run In Background**, поэтому Play mode идёт, даже когда Unity не в фокусе. Перед релизом под Android
@@ -98,6 +100,27 @@
 - `CoinSpawner` кладёт цепочки по 7–13 монет (змейка, дуга от стенки к стенке, завиток) по форме дна горки.
   Монету, на которую наехало препятствие, прячет сама монета (`Coin.OnTriggerEnter` с тегом `Obstacle`).
 - После тестов в Play mode сбрасывать `coins_total` (выход из Play сохраняет кошелёк через `OnApplicationQuit`).
+
+## Производительность
+- URP: SSAO **удалён** из рендереров (не просто выключен: выключенная фича в билде без своих ресурсов падала в Create(),
+  пайплайн не создавался — чёрный мерцающий экран при живом звуке); Performant — renderScale 0.7, без HDR; Balanced (Android по умолчанию) — без HDR,
+  renderScale 0.85, тени 30 м жёсткие; HighFidelity — HDR, без MSAA (с MSAA + HDR + bloom на телефоне был чёрный
+  мерцающий экран), тени 40 м. Доп. источники света выключены. Bloom clamp = 32, свои шейдеры ограничивают цвет 0..8.
+- `GraphicsQuality` (static) хранит выбранный уровень (PlayerPrefs `graphics_level`; старые ключи `quality_level`, `graphics_quality` больше
+  не читается), пост-обработка и Stop NaN только на высшем уровне, на Low — keyword `_WATER_LITE` (вода без каустики,
+  полос и бликов). Страховка: после запуска и каждой смены уровень «на испытании» (`graphics_level_trial`) — несколько
+  кадров снимаются `ScreenCapture`, если большинство в основном чёрные, уровень понижается; если приложение закрыли до конца
+  проверки, следующий запуск берёт уровень по умолчанию. Тестировать: камера `cullingMask = 0` + чёрный фон.
+- `Assets/Editor/MeshCombine.cs` — генераторы препятствий, монеты и акулы склеивают детали модели в один меш на материал
+  (дочерний `Combined`, сетки в `Assets/Obstacles/Meshes/`, `Assets/Coins/CoinModel.asset`, `Assets/Shark/`).
+- Рулёжка не зависит от FPS: `MoveInput` копит пиксели тача и двигает в FixedUpdate в долях ширины экрана
+  (`unitsPerScreenWidth` × `ControlSettings.Sensitivity`).
+
+## Рекорд и настройки
+- `HighScore` (static) — лучший счёт в PlayerPrefs `best_score`; `UIManager` показывает `BEST n`, баннер NEW RECORD! один раз
+  за забег и итог в окне поражения. `ControlSettings.Sensitivity` — PlayerPrefs `sensitivity`, 0.5–2, по умолчанию 1.
+- UI (настройки, рекорд, баннер) строит **Setup Menus** (`Assets/Editor/UISetup.cs`). Шрифт без кириллицы — тексты английские.
+- После тестов в Play mode удалять `best_score` и `coins_total`.
 
 ## Шейдеры (`Assets/Water/`)
 - `FlowingWater.shader` — вода: рябь, каустика, пена у стенок, кильватерный след, блики.

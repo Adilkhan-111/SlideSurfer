@@ -138,7 +138,8 @@ Shader "SlideSurfer/PipeWall"
 
                 half3 rgb = diffuse + spec * light.color + sheen;
                 rgb = MixFog(rgb, i.fogFactor);
-                return half4(rgb, 1.0);
+                // keep the HDR value sane: in half precision a stray overflow becomes Inf/NaN and bloom spreads it
+                return half4(clamp(rgb, 0.0, 8.0), 1.0);
             }
             ENDHLSL
         }

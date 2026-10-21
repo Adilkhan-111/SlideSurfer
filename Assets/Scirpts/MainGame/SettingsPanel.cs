@@ -13,6 +13,8 @@ public class SettingsPanel : MonoBehaviour
     [SerializeField] private Slider musicSlider;
     [SerializeField] private Toggle sfxToggle;
     [SerializeField] private Slider sfxSlider;
+    [SerializeField] private Slider sensitivitySlider;
+    [SerializeField] private TMP_Text sensitivityValue;
     [Tooltip("One button per quality level, lowest first")]
     [SerializeField] private Button[] qualityButtons;
     [SerializeField] private int[] qualityLevels = { 0, 1, 2 };
@@ -20,18 +22,8 @@ public class SettingsPanel : MonoBehaviour
     [SerializeField] private Color qualityNormal = new Color(0.86f, 0.9f, 0.92f);
     [SerializeField] private Button closeButton;
 
-    private const string QualityKey = "quality_level";
     private bool pausedGame;
     private bool refreshing;
-
-    // apply the saved graphics quality before the first scene starts
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-    private static void ApplySavedQuality()
-    {
-        if (!PlayerPrefs.HasKey(QualityKey)) return;
-        int level = PlayerPrefs.GetInt(QualityKey);
-        if (level >= 0 && level < QualitySettings.names.Length) QualitySettings.SetQualityLevel(level, true);
-    }
 
     private void Awake()
     {
@@ -39,6 +31,16 @@ public class SettingsPanel : MonoBehaviour
         sfxToggle.onValueChanged.AddListener(on => { if (refreshing) return; if (Audio != null) Audio.SfxOn = on; Click(); RefreshInteractable(); });
         musicSlider.onValueChanged.AddListener(v => { if (!refreshing && Audio != null) Audio.MusicVolume = v; });
         sfxSlider.onValueChanged.AddListener(v => { if (!refreshing && Audio != null) Audio.SfxVolume = v; });
+        if (sensitivitySlider != null)
+        {
+            sensitivitySlider.minValue = ControlSettings.Min;
+            sensitivitySlider.maxValue = ControlSettings.Max;
+            sensitivitySlider.onValueChanged.AddListener(v =>
+            {
+                ShowSensitivity(v);
+                if (!refreshing) ControlSettings.Sensitivity = v;
+            });
+        }
         for (int i = 0; i < qualityButtons.Length; i++)
         {
             int index = i;
@@ -83,9 +85,19 @@ public class SettingsPanel : MonoBehaviour
             musicSlider.value = Audio.MusicVolume;
             sfxSlider.value = Audio.SfxVolume;
         }
+        if (sensitivitySlider != null)
+        {
+            sensitivitySlider.value = ControlSettings.Sensitivity;
+            ShowSensitivity(sensitivitySlider.value);
+        }
         refreshing = false;
         RefreshInteractable();
         RefreshQuality();
+    }
+
+    private void ShowSensitivity(float v)
+    {
+        if (sensitivityValue != null) sensitivityValue.text = v.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + "x";
     }
 
     // a muted channel greys out its slider
@@ -98,9 +110,7 @@ public class SettingsPanel : MonoBehaviour
     private void SetQuality(int index)
     {
         Click();
-        int level = Mathf.Clamp(qualityLevels[index], 0, QualitySettings.names.Length - 1);
-        QualitySettings.SetQualityLevel(level, true);
-        PlayerPrefs.SetInt(QualityKey, level);
+        GraphicsQuality.SetLevel(qualityLevels[index]);
         RefreshQuality();
     }
 

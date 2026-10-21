@@ -25,6 +25,7 @@ public static class ObstacleSetup
         EnsureFolder(OutDir);
         EnsureFolder(OutDir + "/Materials");
         EnsureFolder(OutDir + "/Textures");
+        EnsureFolder(OutDir + "/Meshes");
         CreateAssets();
 
         // single obstacle: wet floor in the middle, steel barrier on the sides
@@ -35,6 +36,9 @@ public static class ObstacleSetup
             Vector3 size = box.lossyScale;
             GameObject wet = BuildWetFloor(holder, size);
             GameObject steel = BuildSteelBarrier(holder, size);
+            // dozens of little parts -> one mesh per look (one batch per material)
+            MeshCombine.Combine(wet.transform, OutDir + "/Meshes/SingleWall_WetFloor.asset", UnityEngine.Rendering.ShadowCastingMode.On);
+            MeshCombine.Combine(steel.transform, OutDir + "/Meshes/SingleWall_Steel.asset", UnityEngine.Rendering.ShadowCastingMode.On);
             var variant = root.GetComponent<ObstacleVariant>();
             if (variant == null) variant = root.gameObject.AddComponent<ObstacleVariant>();
             var so = new SerializedObject(variant);
@@ -50,7 +54,8 @@ public static class ObstacleSetup
             foreach (string name in new[] { "SingleW", "SingleWRotated" })
             {
                 Transform box = HitBox(root, name);
-                BuildSteelBarrier(Holder(box), box.lossyScale);
+                GameObject steel = BuildSteelBarrier(Holder(box), box.lossyScale);
+                MeshCombine.Combine(steel.transform, OutDir + "/Meshes/DoubleWall_" + name + ".asset", UnityEngine.Rendering.ShadowCastingMode.On);
             }
         });
 
@@ -58,7 +63,8 @@ public static class ObstacleSetup
         EditPrefab("GreatWall", root =>
         {
             Transform box = HitBox(root, "SingleWall");
-            BuildRoadClosed(Holder(box), box.lossyScale);
+            GameObject road = BuildRoadClosed(Holder(box), box.lossyScale);
+            MeshCombine.Combine(road.transform, OutDir + "/Meshes/GreatWall_RoadClosed.asset", UnityEngine.Rendering.ShadowCastingMode.On);
         });
 
         AssetDatabase.SaveAssets();
