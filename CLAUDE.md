@@ -47,6 +47,17 @@
 - **Build Obstacle Models** (`Assets/Editor/ObstacleSetup.cs`) — модели препятствий внутри префабов (дочерний `Visual`),
   белые кубы остаются невидимыми хитбоксами. Материалы и текстуры в `Assets/Obstacles/`.
 
+- **Setup Coins** (`Assets/Editor/CoinSetup.cs`) — префаб `Resources/Prefabs/Coin.prefab` (крутится дочерний `Model`, корень
+  не вращать — GoPipeGo двигает его в локальных осях), иконка `Assets/Coins/CoinIcon.png`, счётчик `CoinCounter` внизу слева
+  на Canvas, `CoinSpawner` на SpawnManager.
+
+## Монеты
+- `CoinWallet` (static): `Total` хранится в PlayerPrefs под ключом `coins_total` (для будущего магазина, тратить через
+  `TrySpend`), `RunCoins` — за текущий забег. Сохранение при смерти, паузе и выходе, не на каждый подбор.
+- `CoinSpawner` кладёт цепочки по 7–13 монет (змейка, дуга от стенки к стенке, завиток) по форме дна горки.
+  Монету, на которую наехало препятствие, прячет сама монета (`Coin.OnTriggerEnter` с тегом `Obstacle`).
+- После тестов в Play mode сбрасывать `coins_total` (выход из Play сохраняет кошелёк через `OnApplicationQuit`).
+
 ## Шейдеры (`Assets/Water/`)
 - `FlowingWater.shader` — вода: рябь, каустика, пена у стенок, кильватерный след, блики.
 - `Spray.shader` — мягкие капли для частиц.
