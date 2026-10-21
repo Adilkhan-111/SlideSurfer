@@ -10,6 +10,10 @@ public class JumpNearBorder : MonoBehaviour
     private bool readyForAn;
     
     private float toBeSureCounter = 11;
+    private float readyTime;
+
+    /// <summary>Seconds until the jump can be used again (0 when it is ready).</summary>
+    public float CooldownLeft => Mathf.Max(0f, readyTime - Time.time);
 
     private void Start()
     {
@@ -26,6 +30,7 @@ public class JumpNearBorder : MonoBehaviour
             player_rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
             readyForAn = true;
             toBeSureCounter = 0;
+            readyTime = Time.time + JumpCooldown;
             StartCoroutine(CooldownCoroutine());
             
         }

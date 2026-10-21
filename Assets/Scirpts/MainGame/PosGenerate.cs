@@ -12,6 +12,15 @@ public class PosGenerate
     }
 
 
+    public int Count => _positions.Count;
+
+    /// <summary>Picks a specific position (and remembers it for the rotation, like GeneratePos does).</summary>
+    public float PosAt(int index)
+    {
+        rIndex = Mathf.Clamp(index, 0, _positions.Count - 1);
+        return _positions[rIndex];
+    }
+
     public float GeneratePos()
     {
 

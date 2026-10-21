@@ -25,6 +25,41 @@ public class SpawnObstacles : MonoBehaviour
     public JumpNearBorder jnb;
     public GameSettings gameSettings;
 
+    // Pacing follows the game design doc: almost nothing in the first seconds, casual until a minute,
+    // ramp-up from a minute, peak around two minutes, hardcore from four. Time = seconds of the run (same as the score).
+    [Header("Pacing")]
+    [Tooltip("Slide speed over the run (seconds -> units/sec)")]
+    public AnimationCurve SpeedOverTime = Linear(new Vector2(0f, 11f), new Vector2(60f, 17f), new Vector2(120f, 25f), new Vector2(240f, 33f), new Vector2(360f, 40f));
+    [Tooltip("Seconds between obstacles over the run")]
+    public AnimationCurve IntervalOverTime = Linear(new Vector2(0f, 2.4f), new Vector2(60f, 1.7f), new Vector2(120f, 1.25f), new Vector2(240f, 0.95f), new Vector2(360f, 0.8f));
+    [Tooltip("No obstacles at the very start, only coins")]
+    public float WarmUpTime = 6f;
+    [Tooltip("The first full-width barrier comes around here, to teach the jump")]
+    public float FirstGreatWallAt = 22f;
+    [Tooltip("Score from which sharks start to appear; the first one is guaranteed right then")]
+    public int SharkFromScore = 70;
+    [Tooltip("Zig-zags (a second obstacle right behind, on another lane) start here...")]
+    public float ZigZagFromTime = 100f;
+    [Tooltip("...and become this likely by the hardcore phase")]
+    [Range(0f, 1f)] public float ZigZagMaxChance = 0.35f;
+    [Tooltip("Distance between the two obstacles of a zig-zag")]
+    public float ZigZagGap = 14f;
+    [Tooltip("Every so often the stream pauses and a coin trail rolls in instead (seconds between pauses)")]
+    public Vector2 BreatherEvery = new Vector2(22f, 32f);
+    public float BreatherLength = 3.5f;
+    [Tooltip("Write every spawn to the Console, to check the rhythm")]
+    public bool LogPacing;
+
+    private enum Kind { Single, Double, Great, Shark }
+
+    private float nextSpawnIn;
+    private float nextBreatherIn;
+    private float lastGreatAt = -999f;
+    private bool firstSharkDone;
+    private bool firstGreatDone;
+    private Kind? lastKind, kindBeforeLast;
+    private CoinSpawner coins;
+
     #region Object pools
     private ObjectPool swPool;
     private ObjectPool dwPool;
@@ -40,10 +75,7 @@ public class SpawnObstacles : MonoBehaviour
     #region list for traking objects
     private List<(GameObject obj, ObjectPool pool)> tempObj;
     #endregion
-    #region Is awaible for GREAT WALL//SHARK, is player DEAD and is ready for JUMP bools
-    private bool isAwaibleForG;
-    private bool isAwaibleForS;
-    private bool isReady;
+    #region is player DEAD, has the game started
     private bool IsPlayerDead;
     private bool isGameHasStarted;
     #endregion
@@ -79,87 +111,122 @@ public class SpawnObstacles : MonoBehaviour
         gwGen = new PosGenerate(GwPositionsX);
         sharkGen = new PosGenerate(SharkPositionsX);
         
-        isAwaibleForG = true;
-        isAwaibleForS = false;
-        isReady = true;
+        coins = GetComponent<CoinSpawner>();
+        nextSpawnIn = WarmUpTime;
+        nextBreatherIn = Random.Range(BreatherEvery.x, BreatherEvery.y);
     }
 
-    
+
     private void Update()
     {
         if (IsPlayerDead || !isGameHasStarted) return;
 
         TempTemp += Time.deltaTime;
-
         Score = Mathf.FloorToInt(TempTemp);
 
-        if(Score >= 150) 
-        {
-            isAwaibleForG = false;
-        }
+        // the slide's speed and the spawn rhythm come from the pacing curves
+        gameSettings.currentSpeed = SpeedOverTime.Evaluate(TempTemp);
+        gameSettings.currentSB = IntervalOverTime.Evaluate(TempTemp);
 
-        if(Score >= 150 & !isAwaibleForS) // 100 actually
-        {
-            isAwaibleForS = true;
-        }
-
-        if (isReady)
-        {
-            StartCoroutine(DelayCoroutine());
-            
-        }
-        
         Check();
 
-        
+        nextSpawnIn -= Time.deltaTime;
+        if (nextSpawnIn > 0f) return;
 
+        // a short breather now and then: no obstacles, a coin trail instead
+        nextBreatherIn -= gameSettings.currentSB;
+        if (nextBreatherIn <= 0f && TempTemp > WarmUpTime + 10f)
+        {
+            nextBreatherIn = Random.Range(BreatherEvery.x, BreatherEvery.y);
+            nextSpawnIn = BreatherLength;
+            if (coins != null) coins.SpawnTrailNow();
+            if (LogPacing) Debug.Log($"[Pacing] {TempTemp:F1}s breather");
+            return;
+        }
 
+        Kind kind = PickKind();
+        float extra = 0f;
+        switch (kind)
+        {
+            case Kind.Single:
+                if (Random.value < ZigZagChance()) { SpawnZigZag(); extra = 0.35f; }
+                else GenSWobs();
+                break;
+            case Kind.Double: GenDWobs(); break;
+            case Kind.Great: GenGWobs(); extra = 0.6f; break;   // room to land after the jump
+            case Kind.Shark: GenSHARKobs(); extra = 0.4f; break;
+        }
+        kindBeforeLast = lastKind;
+        lastKind = kind;
+        nextSpawnIn = gameSettings.currentSB + extra;
+        if (LogPacing) Debug.Log($"[Pacing] {TempTemp:F1}s {kind} speed {gameSettings.currentSpeed:F1} next in {nextSpawnIn:F2}s");
     }
 
-
-    private IEnumerator DelayCoroutine()
+    private Kind PickKind()
     {
-        int typeOfWall = Random.Range(0, 4);
-        
-        if (!isAwaibleForG)
-        {
-            //switch up to other type of wall cause we are waiting for jump cd complete
-            typeOfWall = Random.Range(1, 4);
+        // introduce each new threat once, at its moment, so the player notices it
+        if (!firstGreatDone && TempTemp >= FirstGreatWallAt && GreatWallFair()) { firstGreatDone = true; return Kind.Great; }
+        if (!firstSharkDone && TempTemp >= SharkFromScore) { firstSharkDone = true; return Kind.Shark; }
 
-        }
-        if (!isAwaibleForS)
-        {
-            typeOfWall = Random.Range(0, 3);
-        }
+        float t = Mathf.InverseLerp(0f, 240f, TempTemp);
+        float single = Mathf.Lerp(1f, 0.55f, t);
+        float dbl = Mathf.Lerp(0.3f, 0.6f, t);
+        float great = firstGreatDone && GreatWallFair() ? 0.18f : 0f;
+        float shark = TempTemp >= SharkFromScore ? Mathf.Lerp(0.25f, 0.4f, Mathf.InverseLerp(SharkFromScore, SharkFromScore + 150f, TempTemp)) : 0f;
 
-        if(typeOfWall == 0 & isAwaibleForG)
+        // never the same kind three times in a row
+        if (lastKind.HasValue && lastKind == kindBeforeLast)
         {
-            //do it only when allowed
-            
-            GenGWobs();
-           
-        }
-        
-        else if(typeOfWall == 1)
-        {
-            GenSWobs();
-            
+            switch (lastKind.Value)
+            {
+                case Kind.Single: single = 0f; break;
+                case Kind.Double: dbl = 0f; break;
+                case Kind.Great: great = 0f; break;
+                case Kind.Shark: shark = 0f; break;
+            }
         }
 
-        else if(typeOfWall == 2)
-        {
-            GenDWobs();
-            
-        }
-        else if(typeOfWall == 3 & isAwaibleForS)
-        {
-            GenSHARKobs();
-        }
+        float r = Random.value * (single + dbl + great + shark);
+        if ((r -= single) < 0f) return Kind.Single;
+        if ((r -= dbl) < 0f) return Kind.Double;
+        if ((r -= great) < 0f) return Kind.Great;
+        return Kind.Shark;
+    }
 
-            isReady = false;
-        yield return new WaitForSeconds(gameSettings.currentSB);
-        isReady = true;
-        
+    // a full-width barrier is only fair if the jump will be ready by the time it arrives
+    private bool GreatWallFair()
+    {
+        if (TempTemp - lastGreatAt < jnb.JumpCooldown + 4f) return false;
+        float travelTime = (StartPosZ + 4f) / Mathf.Max(1f, gameSettings.currentSpeed);
+        return jnb.CooldownLeft < travelTime - 1f;
+    }
+
+    private float ZigZagChance()
+    {
+        if (TempTemp < ZigZagFromTime) return 0f;
+        return ZigZagMaxChance * Mathf.InverseLerp(ZigZagFromTime, 240f, TempTemp);
+    }
+
+    // two single obstacles one after another on different lanes: dodge one way, then the other
+    private void SpawnZigZag()
+    {
+        int first = Random.Range(0, swGen.Count);
+        int second = (first + Random.Range(1, swGen.Count)) % swGen.Count;
+        GenSWobsAt(first, 0f);
+        GenSWobsAt(second, ZigZagGap);
+    }
+
+    // a curve made of straight segments through the given (time, value) points
+    private static AnimationCurve Linear(params Vector2[] points)
+    {
+        var keys = new Keyframe[points.Length];
+        for (int i = 0; i < points.Length; i++)
+        {
+            float inSlope = i > 0 ? (points[i].y - points[i - 1].y) / (points[i].x - points[i - 1].x) : 0f;
+            float outSlope = i < points.Length - 1 ? (points[i + 1].y - points[i].y) / (points[i + 1].x - points[i].x) : 0f;
+            keys[i] = new Keyframe(points[i].x, points[i].y, inSlope, outSlope);
+        }
+        return new AnimationCurve(keys);
     }
 
 
@@ -173,6 +240,16 @@ public class SpawnObstacles : MonoBehaviour
         obj.transform.eulerAngles =  new Vector3(obj.transform.eulerAngles.x, obj.transform.eulerAngles.y, rotZ);
         
         
+        tempObj.Add((obj, swPool));
+    }
+    public void GenSWobsAt(int index, float extraZ)
+    {
+        GameObject obj = swPool.Get();
+        float posX = swGen.PosAt(index);
+        float rotZ = swGen.GetRotationForWall();
+        obj.transform.position = new Vector3(posX, obj.transform.position.y, StartPosZ + extraZ);
+        obj.transform.eulerAngles = new Vector3(obj.transform.eulerAngles.x, obj.transform.eulerAngles.y, rotZ);
+
         tempObj.Add((obj, swPool));
     }
     public void GenDWobs()
@@ -196,71 +273,24 @@ public class SpawnObstacles : MonoBehaviour
         obj.transform.eulerAngles = new Vector3(obj.transform.eulerAngles.x, obj.transform.eulerAngles.y, rotZ);
 
         tempObj.Add((obj, gwPool));
-        //and then do coroutine cause we need to wait until jump cd is over
-        StartCoroutine(WaitForCd());
+        // the next one waits for the jump cooldown (see GreatWallFair)
+        lastGreatAt = TempTemp;
     }
     public void GenSHARKobs()
     {
         GameObject obj = sharkPool.Get();
 
-        
-        Rigidbody objRB = obj.GetComponentInChildren<Rigidbody>();
-
-        // Reset
-        if (objRB != null)
-        {
-            //objRB.velocity = Vector3.zero;
-            //objRB.angularVelocity = Vector3.zero;
-            
-            objRB.isKinematic = true;
-        }
-
+        // which side it comes from: negative X = leaps out of the left wall, 0 = swims down the middle, positive = out of the right
         float posX = sharkGen.GeneratePos();
-        float rotY = sharkGen.GetRotationForShark();
-
-        obj.transform.eulerAngles = new Vector3(obj.transform.eulerAngles.x, rotY, obj.transform.eulerAngles.z);
+        int side = posX < -0.01f ? -1 : posX > 0.01f ? 1 : 0;
         obj.transform.position = new Vector3(posX, obj.transform.position.y, StartPosZ);
-        
+        obj.GetComponent<SharkMover>().Launch(side);
 
-
-        GoPipeGo objGPG = obj.GetComponent<GoPipeGo>();
-
-        if (posX == SharkPositionsX[0] || posX == SharkPositionsX[2])
-        {
-            if (objRB != null)
-            {
-                
-                objRB.isKinematic = false;
-                objRB.linearVelocity = Vector3.zero;
-                objRB.angularVelocity = Vector3.zero;
-            }
-            objGPG.JumpForward();
-        }
-        else
-        {
-            if (objRB != null)
-            {
-                obj.transform.position = new Vector3(posX, 2, StartPosZ);
-                objRB.isKinematic = true;
-            }
-        }
-        
         tempObj.Add((obj, sharkPool));
     }
 
 
 
-    private IEnumerator WaitForCd()
-    {
-        //some coroutine for jump cd
-        isAwaibleForG = false;
-        //multiply by 2 because cooldown on Great wall doesnt work proper, and seems like it waits 2 times less
-        int cForG = jnb.JumpCooldown * 2;
-        yield return new WaitForSeconds(cForG);
-        
-        isAwaibleForG = true;
-
-    }
     public void Check()
     {
         for (int i = tempObj.Count - 1; i >= 0; i--)

@@ -21,7 +21,6 @@ public class CoinSpawner : MonoBehaviour
     [SerializeField] private float heightAboveSurface = 1f;
     [Tooltip("Z where the shape of the slide is measured (the player's lane)")]
     [SerializeField] private float probeZ = -4f;
-    [SerializeField] private string pipeTag = "Pipe";
 
     [Header("When")]
     [SerializeField] private float firstDelay = 2.5f;
@@ -30,7 +29,6 @@ public class CoinSpawner : MonoBehaviour
 
     private ObjectPool pool;
     private readonly List<GameObject> active = new List<GameObject>();
-    private readonly List<Vector2> profile = new List<Vector2>();   // (x, surface y) across the slide
     private ParticleSystem sparkle;
     private bool running;
     private bool dead;
@@ -60,7 +58,7 @@ public class CoinSpawner : MonoBehaviour
         Coin.Removed -= OnCoinRemoved;
     }
 
-    private void Start() => MeasureSlide();
+    private void Start() => SlideProfile.Measure(probeZ);
 
     private void OnGameHasStarted() => running = true;
 
@@ -93,6 +91,14 @@ public class CoinSpawner : MonoBehaviour
 
     // ---------------------------------------------------------------- trails
 
+    /// <summary>Lay a trail right away (the obstacle spawner calls this during a breather).</summary>
+    public void SpawnTrailNow()
+    {
+        if (!running || dead) return;
+        SpawnTrail();
+        timer = Random.Range(secondsBetweenTrails.x, secondsBetweenTrails.y);
+    }
+
     private void SpawnTrail()
     {
         int count = Random.Range(coinsPerTrail.x, coinsPerTrail.y + 1);
@@ -121,7 +127,7 @@ public class CoinSpawner : MonoBehaviour
             }
             x = Mathf.Clamp(x, -maxX, maxX);
             float z = spawnZ + i * coinSpacing;
-            Place(new Vector3(x, SurfaceY(x) + heightAboveSurface, z));
+            Place(new Vector3(x, SlideProfile.SurfaceY(x) + heightAboveSurface, z));
         }
     }
 
@@ -143,39 +149,6 @@ public class CoinSpawner : MonoBehaviour
     {
         pool.Release(active[index]);
         active.RemoveAt(index);
-    }
-
-    // ---------------------------------------------------------------- slide shape
-
-    // shoot rays down across the slide once, so coins can hug its curved floor
-    private void MeasureSlide()
-    {
-        profile.Clear();
-        for (float x = -maxX - 0.5f; x <= maxX + 0.5f; x += 0.25f)
-        {
-            float best = float.MinValue;
-            foreach (RaycastHit hit in Physics.RaycastAll(new Vector3(x, 100f, probeZ), Vector3.down, 200f, ~0, QueryTriggerInteraction.Ignore))
-            {
-                if (hit.collider.CompareTag(pipeTag) && hit.point.y > best) best = hit.point.y;
-            }
-            if (best > float.MinValue) profile.Add(new Vector2(x, best));
-        }
-        if (profile.Count == 0)
-        {
-            Debug.LogWarning("CoinSpawner: no '" + pipeTag + "' colliders under z=" + probeZ + ", coins use a flat floor", this);
-            profile.Add(new Vector2(0f, 0.6f));
-        }
-    }
-
-    private float SurfaceY(float x)
-    {
-        if (x <= profile[0].x) return profile[0].y;
-        for (int i = 1; i < profile.Count; i++)
-        {
-            if (x <= profile[i].x)
-                return Mathf.Lerp(profile[i - 1].y, profile[i].y, Mathf.InverseLerp(profile[i - 1].x, profile[i].x, x));
-        }
-        return profile[profile.Count - 1].y;
     }
 
     // ---------------------------------------------------------------- pickup sparkle

@@ -578,6 +578,7 @@ GameObject:
   - component: {fileID: 330585545}
   - component: {fileID: 330585544}
   - component: {fileID: 330585547}
+  - component: {fileID: 330585548}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -703,6 +704,23 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!114 &330585548
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 330585543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 974bc4c5758a01a4ab7e633205540203, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpeedFov
+  gameSettings: {fileID: 11400000, guid: 7b6e4421bbed57c4f803e4a9971ded76, type: 2}
+  startSpeed: 20
+  fullSpeed: 38
+  extraFov: 9
+  smoothing: 2
 --- !u!1 &355414176
 GameObject:
   m_ObjectHideFlags: 0
@@ -1425,6 +1443,117 @@ MonoBehaviour:
   SecBetween: 5
   jnb: {fileID: 206399632}
   gameSettings: {fileID: 11400000, guid: 7b6e4421bbed57c4f803e4a9971ded76, type: 2}
+  SpeedOverTime:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 11
+      inSlope: 0
+      outSlope: 0.1
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 60
+      value: 17
+      inSlope: 0.1
+      outSlope: 0.13333334
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 120
+      value: 25
+      inSlope: 0.13333334
+      outSlope: 0.06666667
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 240
+      value: 33
+      inSlope: 0.06666667
+      outSlope: 0.058333334
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 360
+      value: 40
+      inSlope: 0.058333334
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  IntervalOverTime:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 2.4
+      inSlope: 0
+      outSlope: -0.011666668
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 60
+      value: 1.7
+      inSlope: -0.011666668
+      outSlope: -0.0075000008
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 120
+      value: 1.25
+      inSlope: -0.0075000008
+      outSlope: -0.0025000002
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 240
+      value: 0.95
+      inSlope: -0.0025000002
+      outSlope: -0.0012499999
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 360
+      value: 0.8
+      inSlope: -0.0012499999
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  WarmUpTime: 6
+  FirstGreatWallAt: 22
+  SharkFromScore: 70
+  ZigZagFromTime: 100
+  ZigZagMaxChance: 0.35
+  ZigZagGap: 14
+  BreatherEvery: {x: 22, y: 32}
+  BreatherLength: 3.5
+  LogPacing: 0
 --- !u!4 &701700570
 Transform:
   m_ObjectHideFlags: 0
@@ -1460,7 +1589,6 @@ MonoBehaviour:
   maxX: 2.7
   heightAboveSurface: 1
   probeZ: -4
-  pipeTag: Pipe
   firstDelay: 2.5
   secondsBetweenTrails: {x: 2.5, y: 5}
   coinsPerTrail: {x: 7, y: 13}
@@ -1618,6 +1746,67 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 8e698230c3ae93445a96038da0f0b07c, type: 3}
   m_PrefabInstance: {fileID: 959926249}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &825550917
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 825550919}
+  - component: {fileID: 825550918}
+  m_Layer: 0
+  m_Name: AudioManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &825550918
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 825550917}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf21ac4bdfeb94940bab2480b26786df, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AudioManager
+  music: {fileID: 8300000, guid: c178e6dc3e3ce1a4898094e913522380, type: 3}
+  loopStart: 0.12247916
+  loopEnd: 91.650566
+  crossfade: 1.5
+  muffledCutoff: 900
+  coin: {fileID: 8300000, guid: 7baa97b73f0fef0419d37fb1f42bc24b, type: 3}
+  jump: {fileID: 8300000, guid: 111b092054ab8e64c8bb7ca051cee27f, type: 3}
+  land: {fileID: 8300000, guid: f1986b7bc60885a4fa86e18dee5a8290, type: 3}
+  crash: {fileID: 8300000, guid: 23e414e02a886b94ab172fd0be26ae8f, type: 3}
+  gameOver: {fileID: 8300000, guid: 2d790dfce31831a4e899bb92eb1d73ca, type: 3}
+  sharkWarning: {fileID: 8300000, guid: 6c031e46b15c2674487b0e66935f1b9a, type: 3}
+  sharkSplash: {fileID: 8300000, guid: 739529892a9647144a6f6e61aa91a079, type: 3}
+  click: {fileID: 8300000, guid: 2ea986d91aa2a6a42a04d93a064fcb5e, type: 3}
+  water: {fileID: 8300000, guid: 9db009e84dcb14648aa262d877212249, type: 3}
+  gameSettings: {fileID: 11400000, guid: 7b6e4421bbed57c4f803e4a9971ded76, type: 2}
+  streakWindow: 0.6
+  streakSteps: 8
+--- !u!4 &825550919
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 825550917}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -1826,7 +2015,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4285785855
   m_fontColor: {r: 1, g: 0.9, b: 0.45, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -1839,7 +2028,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -3381,3 +3570,4 @@ SceneRoots:
   - {fileID: 2146365709}
   - {fileID: 1865431909}
   - {fileID: 15379460}
+  - {fileID: 825550919}

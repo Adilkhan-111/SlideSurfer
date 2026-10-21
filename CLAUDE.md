@@ -51,6 +51,35 @@
   не вращать — GoPipeGo двигает его в локальных осях), иконка `Assets/Coins/CoinIcon.png`, счётчик `CoinCounter` внизу слева
   на Canvas, `CoinSpawner` на SpawnManager.
 
+- **Build Shark** (`Assets/Editor/SharkSetup.cs`) — модель акулы в `Resources/Prefabs/Shark.prefab` (тело-лофт, плавники,
+  хвост на отдельном пивоте), куб `SharkObj` остаётся невидимым хитбоксом. Ассеты в `Assets/Shark/`. Сетки обновляются через
+  Mesh API: `EditorUtility.CopySerialized` для Mesh оставлял старую геометрию на GPU.
+
+## Звук
+- **Setup Audio** (`Assets/Editor/AudioSetup.cs`) синтезирует SFX в `Assets/Audio/SFX/*.wav` (монета, прыжок, приземление,
+  удар, джингл проигрыша, предупреждение и всплеск акулы, клик, петля воды), находит точки цикла музыки из
+  `Assets/Audio/Music/`, ставит импорт (музыка Streaming/Vorbis, SFX DecompressOnLoad/ADPCM mono), кладёт `AudioManager` в сцену.
+- `AudioManager` (DontDestroyOnLoad, музыка не прерывается при рестарте): цикл кроссфейдом двух AudioSource между
+  loopStart/loopEnd; low-pass «под водой» до старта и после смерти; монеты повышают тон по серии; вода громче/выше со скоростью.
+  События: `EventManager`, `Coin.Removed`, `SharkMover.Appeared/Leaped`, `PlayerAnimator.Jumped/Landed`; клик из `UIManager`.
+  Громкости `MusicVolume/SfxVolume` в PlayerPrefs (`volume_music`, `volume_sfx`) — для будущих настроек.
+
+## Темп (пейсинг)
+- Задаёт `SpawnObstacles` (на SpawnManager), время = секунды забега = очки. Кривые `SpeedOverTime` (11→17→25→33→40 на
+  0/60/120/240/360 с) и `IntervalOverTime` (2.4→1.7→1.25→0.95→0.8 с) пишут `GameSettings.currentSpeed/currentSB`;
+  `ScoreCounter` скорость больше не трогает.
+- Разогрев 6 с без препятствий; первое полное ограждение на 22 с (учит прыжку); первая акула гарантированно на `SharkFromScore`.
+- Не больше двух одинаковых подряд; полное ограждение только если прыжок (`JumpNearBorder.CooldownLeft`) будет готов к его
+  приходу; с 100 с зигзаги (два одиночных подряд на разных дорожках); каждые 22–32 с передышка 3.5 с с цепочкой монет.
+- `SpeedFov` на камере расширяет FOV с ростом скорости (с ~20 до 38 ед/с, до +9°).
+- Галочка `LogPacing` пишет каждый спавн в консоль. Проверка: игрок в Rigidbody.isKinematic под землю + `Time.timeScale = 8`.
+
+## Акула
+- Появляется с `SpawnObstacles.SharkFromScore` (70). Двигает её `SharkMover` (без физики и GoPipeGo), вдвое быстрее горки:
+  по центру плывёт навстречу игроку наполовину в воде; сбоку ждёт под землёй за стенкой и, когда до игрока 48 м,
+  перепрыгивает стенку дугой и приземляется на противоположную сторону (x = ∓2.2) за 20 м до игрока, дальше плывёт там.
+- `SlideProfile` (static) — общая форма сечения горки для монет и акулы (лучи по коллайдерам `Pipe`).
+
 ## Монеты
 - `CoinWallet` (static): `Total` хранится в PlayerPrefs под ключом `coins_total` (для будущего магазина, тратить через
   `TrySpend`), `RunCoins` — за текущий забег. Сохранение при смерти, паузе и выходе, не на каждый подбор.
@@ -65,6 +94,5 @@
   Значения в `PipeWall.mat` пользователь настраивает сам — не сбрасывать без спроса.
 
 ## Что ещё не сделано
-- Акула (`Shark` prefab) — пока куб.
 - До старта забега вода видна за ближним краем трубы.
 - Пол/окружение — плоская бирюзовая плоскость.

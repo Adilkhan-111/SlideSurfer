@@ -55,13 +55,14 @@ public class UIManager : MonoBehaviour
 
     public void Replay()
     {
+        if (AudioManager.Instance != null) AudioManager.Instance.PlayClick();
         EventManager.ResetState();
         SceneManager.LoadScene(0);
     }
 
     public void OpenSettings()
     {
-        
+        if (AudioManager.Instance != null) AudioManager.Instance.PlayClick();
         if (SettingsUI != null)
         {
             SettingsUI.SetActive(!SettingsUI.activeInHierarchy);
